@@ -1,0 +1,17 @@
+name: Branch flow
+# Chặn feature/* merge thẳng vào main: PR vào main chỉ được phép khi head là dev.
+# Dùng required status check "branch-flow" cho main trong branch protection.
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  branch-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only dev may merge into main
+        run: |
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "::error::PR vào main phải từ dev. Head là '${{ github.head_ref }}'."
+            exit 1
+          fi
+          echo "OK: dev -> main"
