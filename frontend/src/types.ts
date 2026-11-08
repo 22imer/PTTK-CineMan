@@ -148,4 +148,5 @@ export interface GiaoDichDoiDiem {
 export interface DanhSachQuaTang {
   dsQuaTang: QuaTang[];
   tongDiem: number;
+  lichSuDoiQua: VoucherKhachHang[];
 }
