@@ -118,8 +118,14 @@ GDKhachHangHome → GDChonPhim → GDKhungGio → GDSuatChieu → GDChonGhe → 
 GDKhachHangHome → GDChonQua → GDXacNhanDoiQua → GDThongBao   (đổi điểm)
 ```
 
-Bước 2 chỉ hiện thực 3 trang đầu (`DangNhap.tsx`, `GDDangKyTaiKhoan.tsx`, `GDKhachHangHome.tsx`);
-9 trang đặt vé/đổi điểm triển khai ở bước sau, hợp đồng API của chúng vẫn giữ ở §7.
+Đăng nhập/đăng ký vẫn gọi `POST /api/auth/login` và `POST /api/auth/register`.
+Các màn còn lại là view có trạng thái được kiểm soát (`frontend/src/ui/models.ts`):
+ chúng nhận dữ liệu hiển thị và callback, không tự gọi API. Mẫu UI (`?ui=VE-02`, …) chỉ
+ cung cấp dữ liệu minh họa và cho biết dữ liệu không thay đổi; nút trên bản mẫu không
+ tạo hóa đơn, giữ ghế, thanh toán hay đổi điểm. Vé được gắn mã QR mẫu ở
+ `frontend/public/ticket-demo.svg`; mã chứa văn bản demo, không phải vé có thể đổi.
+Bản xem chỉ dùng cho duyệt trình bày cho tới khi controller điều phối dữ liệu và
+ callback thật.
 
 | Trang | Vai trò cốt lõi |
 | :--- | :--- |
@@ -238,8 +244,9 @@ deploy/
 │       ├── App.tsx               # điều hướng theo React state (mục 6)
 │       ├── types.ts              # type KhachHang dùng chung
 │       ├── styles.css
+│       ├── ui/                   # primitives, data model cho view và preview mẫu
 │       ├── api/httpClient.ts     # HTTPClient.fetch()
-│       └── pages/                # bước 2: DangNhap, GDDangKyTaiKhoan, GDKhachHangHome
+│       └── pages/                # DangNhap, GDDangKyTaiKhoan, GDKhachHangHome + 9 màn nghiệp vụ
 ├── backend/                      # Spring Boot (Maven)
 │   ├── Dockerfile                # maven build → JRE 21
 │   ├── .dockerignore             # target/
@@ -257,6 +264,11 @@ deploy/
 ```
 
 > Tên file/lớp giữ tiếng Việt không dấu như bc để đối chiếu sơ đồ (VD `ThanhVienDAO`, `GDChonGhe.tsx`).
+
+`frontend/src/ui/Preview.tsx` có bộ chọn dùng chung cho 14 cảnh `DK-01`–`DT-03`.
+Mỗi cảnh chọn trạng thái mẫu của chính cảnh đó (có dữ liệu, đang tải, rỗng, lỗi và
+ ca lỗi nghiệp vụ liên quan). Bộ chọn này không suy luận giao dịch từ trạng thái
+ màn hình; nó chỉ để xem trạng thái tĩnh có nhãn rõ.
 
 ## 10. Diagrams
 
@@ -278,6 +290,9 @@ cd frontend && npm ci && npm run dev    # localhost:5173, /api → http://localh
 cd backend && mvn test              # H2 chế độ MySQL, tự nạp schema.sql + data.sql
 cd frontend && npm run build        # tsc --noEmit && vite build → dist/
 ```
+
+UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
+ Lightpanda không tạo ảnh render và không thay cho kiểm tra bằng mắt ở khổ hẹp.
 
 `npm ci` cài đúng theo `package-lock.json` (Dockerfile dùng lệnh này); `npm install` chỉ khi cần cập nhật lockfile.
 `API_PROXY_TARGET` mặc định `http://localhost:8080`, trong compose đặt `http://backend:8080`.
