@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { HTTPClient } from '../api/httpClient';
 import type { KhachHang } from '../types';
 import AuthFrame from './AuthFrame';
+import PasswordInput from '../ui/PasswordInput';
 
 const THONG_BAO_DANG_KY_THANH_CONG = 'Đăng ký tài khoản thành viên thành công!';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -253,19 +254,10 @@ export default function GDDangKyTaiKhoan({
       heading="Đăng ký thành viên"
       description="Điền đầy đủ thông tin để tạo tài khoản CineMan."
     >
-      <p
-        className="form-alert"
-        id="outThongBao"
-        role="alert"
-        tabIndex={-1}
-        ref={loiMayChuRef}
-      >
-        {loiMayChu}
-      </p>
 
       <form className="form" onSubmit={handleSubmit} noValidate aria-busy={dangGui}>
         <div className="register-grid">
-          <div className="field field--wide">
+          <div className="field">
             <label htmlFor="inHoTen">Họ tên</label>
             <input
               {...fieldProps('hoTen')}
@@ -277,6 +269,51 @@ export default function GDDangKyTaiKhoan({
               ref={setRef('hoTen')}
             />
             {renderFieldError('hoTen')}
+          </div>
+          <div className="field">
+            <label htmlFor="inusername">Tên đăng nhập</label>
+            <input
+              {...fieldProps('username')}
+              name="username"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={values.username}
+              onChange={(event) => capNhat('username', event.target.value)}
+              ref={setRef('username')}
+            />
+            {renderFieldError('username')}
+          </div>
+          <div className="field">
+            <label htmlFor="inpassword">Mật khẩu</label>
+            <PasswordInput
+              {...fieldProps('password')}
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              aria-describedby={errors.password ? 'loi-password' : 'password-hint'}
+              value={values.password}
+              onChange={(event) => capNhat('password', event.target.value)}
+              ref={setRef('password')}
+            />
+            <p className="field-hint" id="password-hint">Ít nhất 8 ký tự.</p>
+            {renderFieldError('password')}
+          </div>
+          <div className="field">
+            <label htmlFor="inxacnhanmatkhau">Nhập lại mật khẩu</label>
+            <PasswordInput
+              {...fieldProps('xacNhanMatKhau')}
+              name="xacNhanMatKhau"
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              value={values.xacNhanMatKhau}
+              onChange={(event) => capNhat('xacNhanMatKhau', event.target.value)}
+              ref={setRef('xacNhanMatKhau')}
+            />
+            {renderFieldError('xacNhanMatKhau')}
           </div>
 
           <div className="field">
@@ -309,39 +346,7 @@ export default function GDDangKyTaiKhoan({
             {renderFieldError('gioiTinh')}
           </div>
 
-          <div className="field">
-            <label htmlFor="inSodienthoai">Số điện thoại</label>
-            <input
-              {...fieldProps('sdt')}
-              name="sdt"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="0912345678"
-              value={values.sdt}
-              onChange={(event) => capNhat('sdt', event.target.value)}
-              ref={setRef('sdt')}
-            />
-            {renderFieldError('sdt')}
-          </div>
 
-          <div className="field">
-            <label htmlFor="inemail">Email</label>
-            <input
-              {...fieldProps('email')}
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoCapitalize="none"
-              spellCheck={false}
-              placeholder="ban@example.com"
-              value={values.email}
-              onChange={(event) => capNhat('email', event.target.value)}
-              ref={setRef('email')}
-            />
-            {renderFieldError('email')}
-          </div>
 
           <div className="field field--wide">
             <label htmlFor="inDiaChi">Địa chỉ</label>
@@ -356,53 +361,48 @@ export default function GDDangKyTaiKhoan({
             />
             {renderFieldError('diaChi')}
           </div>
-
-          <div className="field field--wide">
-            <label htmlFor="inusername">Tên đăng nhập</label>
+          <div className="field">
+            <label htmlFor="inemail">Email</label>
             <input
-              {...fieldProps('username')}
-              name="username"
-              type="text"
-              autoComplete="username"
+              {...fieldProps('email')}
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
               autoCapitalize="none"
               spellCheck={false}
-              value={values.username}
-              onChange={(event) => capNhat('username', event.target.value)}
-              ref={setRef('username')}
+              placeholder="Nhập email"
+              value={values.email}
+              onChange={(event) => capNhat('email', event.target.value)}
+              ref={setRef('email')}
             />
-            {renderFieldError('username')}
+            {renderFieldError('email')}
           </div>
-
           <div className="field">
-            <label htmlFor="inpassword">Mật khẩu</label>
+            <label htmlFor="inSodienthoai">Số điện thoại</label>
             <input
-              {...fieldProps('password')}
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              minLength={8}
-              value={values.password}
-              onChange={(event) => capNhat('password', event.target.value)}
-              ref={setRef('password')}
+              {...fieldProps('sdt')}
+              name="sdt"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="Nhập số điện thoại"
+              value={values.sdt}
+              onChange={(event) => capNhat('sdt', event.target.value)}
+              ref={setRef('sdt')}
             />
-            {renderFieldError('password')}
-          </div>
-
-          <div className="field">
-            <label htmlFor="inxacnhanmatkhau">Nhập lại mật khẩu</label>
-            <input
-              {...fieldProps('xacNhanMatKhau')}
-              name="xacNhanMatKhau"
-              type="password"
-              autoComplete="new-password"
-              minLength={8}
-              value={values.xacNhanMatKhau}
-              onChange={(event) => capNhat('xacNhanMatKhau', event.target.value)}
-              ref={setRef('xacNhanMatKhau')}
-            />
-            {renderFieldError('xacNhanMatKhau')}
+            {renderFieldError('sdt')}
           </div>
         </div>
+      <p
+        className="form-alert"
+        id="outThongBao"
+        role="alert"
+        tabIndex={-1}
+        ref={loiMayChuRef}
+      >
+        {loiMayChu}
+      </p>
 
         <div className="form-actions form-actions--end">
           <button

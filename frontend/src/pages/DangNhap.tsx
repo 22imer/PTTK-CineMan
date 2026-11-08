@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { HTTPClient } from '../api/httpClient';
 import type { KhachHang } from '../types';
 import AuthFrame from './AuthFrame';
+import PasswordInput from '../ui/PasswordInput';
 
 interface DangNhapProps {
   /** Thông báo chuyển từ trang đăng ký sau khi tạo tài khoản thành công. */
@@ -128,7 +129,7 @@ export default function DangNhap({
 
         <div className="field">
           <label htmlFor="inpassword">Mật khẩu</label>
-          <input
+          <PasswordInput
             id="inpassword"
             name="password"
             type="password"

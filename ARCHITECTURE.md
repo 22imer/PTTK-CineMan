@@ -125,7 +125,9 @@ GDKhachHangHome → GDChonPhim → GDKhungGio → GDSuatChieu → GDChonGhe → 
 GDKhachHangHome → GDChonQua → GDXacNhanDoiQua → GDThongBao   (đổi điểm)
 ```
 
-Issue #1 triển khai đủ 12 trang; ba trang Auth/Home có sẵn được nối với chín trang đặt vé/đổi điểm.
+Issue #1 triển khai đủ 12 trang nối với REST API thật qua `App.tsx` và `HTTPClient.fetch()`.
+Các màn `GD*.tsx` nhận dữ liệu hiển thị (`frontend/src/ui/models.ts`) và callback từ tầng điều phối;
+ngoài luồng thật ở `/`, chế độ `?ui=VE-02`… (`Preview.tsx`) vẫn giữ để duyệt nhanh 14 wireframe tĩnh.
 
 | Trang | Vai trò cốt lõi |
 | :--- | :--- |
@@ -252,8 +254,9 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │       ├── App.tsx               # điều hướng theo React state (mục 6)
 │       ├── types.ts              # kiểu hồ sơ, đặt vé và đổi điểm dùng chung
 │       ├── styles.css
+│       ├── ui/                   # primitives, data model cho view và preview mẫu
 │       ├── api/httpClient.ts     # HTTPClient.fetch()
-│       └── pages/                # 12 trang ở §6, cùng các thành phần giao diện dùng chung
+│       └── pages/                # DangNhap, GDDangKyTaiKhoan, GDKhachHangHome + 9 màn nghiệp vụ
 ├── backend/                      # Spring Boot (Maven)
 │   ├── Dockerfile                # maven build → JRE 21
 │   ├── .dockerignore             # target/
@@ -271,6 +274,11 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 ```
 
 > Tên file/lớp giữ tiếng Việt không dấu như bc để đối chiếu sơ đồ (VD `ThanhVienDAO`, `GDChonGhe.tsx`).
+
+`frontend/src/ui/Preview.tsx` có bộ chọn dùng chung cho 14 cảnh `DK-01`–`DT-03`.
+Mỗi cảnh chọn trạng thái mẫu của chính cảnh đó (có dữ liệu, đang tải, rỗng, lỗi và
+ ca lỗi nghiệp vụ liên quan). Bộ chọn này không suy luận giao dịch từ trạng thái
+ màn hình; nó chỉ để xem trạng thái tĩnh có nhãn rõ.
 
 ## 10. Diagrams
 
@@ -307,6 +315,9 @@ mvn -Dtest=M1IntegrationTest test
 Không trỏ lệnh này vào DB đang dùng: `spring.sql.init.mode=always` trong profile test nạp lại toàn bộ
 schema/seed. Kiểm thử qua REST/JDBC kiểm tra giữ ghế tranh chấp, voucher/điểm đúng một lần, và rollback
 cả hóa đơn/vé, phiếu/voucher, thanh toán/điểm khi một bước ghi bị lỗi.
+
+UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
+ Lightpanda không tạo ảnh render và không thay cho kiểm tra bằng mắt ở khổ hẹp.
 
 `npm ci` cài đúng theo `package-lock.json` (Dockerfile dùng lệnh này); `npm install` chỉ khi cần cập nhật lockfile.
 `API_PROXY_TARGET` mặc định `http://localhost:8080`, trong compose đặt `http://backend:8080`.

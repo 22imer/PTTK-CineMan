@@ -1,94 +1,75 @@
-import type { KhachHang, VoucherKhachHang } from '../types';
-import {
-  dinhDangNgay,
-  dinhDangNgayGio,
-  hanVoucher,
-  maPhieuDoiDiem,
-  maQuaTang,
-  nhanTrangThai,
-} from '../utils';
-import FlowFrame from './FlowFrame';
+import { Screen } from '../ui/common';
+import type { DoiDiemUI } from '../ui/models';
 
-interface GDThongBaoProps {
-  khachHang: KhachHang;
-  voucher: VoucherKhachHang;
-  /** Quay lại catalogue để đổi tiếp; App tải lại điểm tươi. */
-  onDoiTiep: () => void;
-  onVeTrangChu: () => void;
+export interface GDThongBaoProps {
+  giaoDich: DoiDiemUI;
+  onVeDanhMuc: () => void;
 }
 
-export default function GDThongBao({
-  khachHang,
-  voucher,
-  onDoiTiep,
-  onVeTrangChu,
-}: GDThongBaoProps) {
-  const phieu = voucher.giaoDichDoiDiem;
-  const maPhieu = maPhieuDoiDiem(phieu.id);
-
+/**
+ * DT-03 — Đổi điểm thành công.
+ * Phiếu và voucher do lớp điều khiển truyền vào; màn này không tạo giao dịch,
+ * không cấp voucher và không tự tính điểm.
+ */
+export default function GDThongBao({ giaoDich, onVeDanhMuc }: GDThongBaoProps) {
   return (
-    <FlowFrame
-      khachHang={khachHang}
-      kicker="Đổi điểm · Hoàn tất"
-      title="Đổi quà thành công"
-      description="Phiếu đổi điểm và voucher mới đã được ghi nhận. Voucher có hạn 30 ngày kể từ ngày nhận."
-    >
-      <section className="flow-card" aria-labelledby="tieuDePhieuDoiDiem">
-        <div className="section-head section-head--split">
+    <Screen title="Đổi điểm thành công!">
+      <section className="reward-receipt" id="outPDQ" aria-label="Phiếu đổi điểm">
+        <p className="receipt-meta">
+          <span>
+            Phiếu: <strong>{giaoDich.maPhieu}</strong>
+          </span>
+          <span>Ngày: {giaoDich.thoiGian}</span>
+        </p>
+
+        <dl className="summary-list">
           <div>
-            <h2 id="tieuDePhieuDoiDiem">Phiếu {maPhieu}</h2>
-            <p className="section-note" id="outPDQ">
-              Mã phiếu: <strong>{maPhieu}</strong> · Ghi nhận lúc {dinhDangNgayGio(phieu.thoiGian)}
-            </p>
+            <dt>Khách hàng</dt>
+            <dd>{giaoDich.khachHang}</dd>
           </div>
-          <p className="badge badge--ok">Đã ghi nhận</p>
-        </div>
-
-        <div className="voucher-highlight">
-          <p className="voucher-highlight__label">Mã voucher của bạn</p>
-          <p className="voucher-highlight__code">{voucher.maVoucher}</p>
-          <p className="section-note">
-            Trạng thái: {nhanTrangThai(voucher.trangThai)} · Ngày nhận {dinhDangNgay(voucher.ngayNhan)} ·
-            Hạn dùng {hanVoucher(voucher.ngayNhan)}
-          </p>
-        </div>
-
-        <dl className="totals">
           <div>
-            <dt>Quà tặng</dt>
+            <dt>Phần thưởng đổi</dt>
             <dd>
-              {phieu.quaTang?.tenQua || 'Quà tặng CineMan'}
-              {phieu.quaTang?.id ? ` (${maQuaTang(phieu.quaTang.id)})` : ''}
+              {giaoDich.qua.ten}{' '}
+              <span className="muted">(Mã {giaoDich.qua.ma})</span>
             </dd>
           </div>
           <div>
-            <dt>Điểm đã trừ</dt>
-            <dd>−{phieu.soDiemTru.toLocaleString('vi-VN')} điểm</dd>
-          </div>
-          <div className="total-line--grand">
-            <dt>Điểm còn lại</dt>
-            <dd>{phieu.diemConLai.toLocaleString('vi-VN')} điểm</dd>
+            <dt>Điểm tích lũy trước khi đổi</dt>
+            <dd>{giaoDich.diemTruoc} điểm</dd>
           </div>
           <div>
-            <dt>Khách hàng</dt>
-            <dd>{phieu.khachHang?.hoTen || khachHang.hoTen || khachHang.username}</dd>
+            <dt>Số điểm quy đổi bị trừ</dt>
+            <dd>−{giaoDich.diemTru} điểm</dd>
+          </div>
+          <div className="total-row">
+            <dt>Số điểm còn lại</dt>
+            <dd>
+              <strong>{giaoDich.diemSau} điểm</strong>
+            </dd>
           </div>
         </dl>
-
-        <p className="section-note">
-          Điểm còn lại đã được cập nhật trên máy chủ và hiển thị tại trang chủ. Bạn có thể đổi tiếp hoặc
-          dùng voucher này cho hóa đơn vé phim phù hợp.
-        </p>
-
-        <div className="flow-actions">
-          <button className="btn btn--primary" id="btnXacNhan" type="button" onClick={onDoiTiep}>
-            Đổi quà khác
-          </button>
-          <button className="btn btn--ghost" id="btnQuayLai" type="button" onClick={onVeTrangChu}>
-            Về trang chủ
-          </button>
-        </div>
       </section>
-    </FlowFrame>
+
+      <section className="voucher-card" aria-label="Voucher điện tử">
+        <p className="muted">Mã voucher điện tử</p>
+        <p className="voucher-code" id="vc">
+          {giaoDich.maVoucher}
+        </p>
+      </section>
+
+      <p className="reward-validity">
+        Thời hạn sử dụng voucher: <strong>{giaoDich.hanSuDung}</strong>
+      </p>
+      <p className="muted">
+        Hệ thống quay lại danh mục phần thưởng với số điểm đã cập nhật.
+      </p>
+
+      <div className="actions">
+        <button type="button" className="btn btn--primary" id="btnXacNhan" onClick={onVeDanhMuc}>
+          Về danh mục phần thưởng
+        </button>
+      </div>
+    </Screen>
   );
 }

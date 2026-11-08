@@ -1,168 +1,155 @@
-import { useEffect, useRef, useState } from 'react';
-import { HTTPClient } from '../api/httpClient';
-import type { KhachHang, QuaTang, VoucherKhachHang } from '../types';
-import { dinhDangNgay, dinhDangTien, hanVoucher, maQuaTang, thongDiepLoi } from '../utils';
-import FlowFrame from './FlowFrame';
+import { useEffect, useRef } from 'react';
+import { Notice } from '../ui/common';
+import type { QuaTangUI } from '../ui/models';
 
-interface GDXacNhanDoiQuaProps {
-  khachHang: KhachHang;
-  quaTang: QuaTang;
-  tongDiem: number;
-  onDoiThanhCong: (voucher: VoucherKhachHang) => void;
-  onQuayLai: () => void;
+export interface GDXacNhanDoiQuaProps {
+  open: boolean;
+  qua: QuaTangUI;
+  diemTruoc: number;
+  diemSau: number;
+  onHuy: () => void;
+  onXacNhan: () => void;
+  busy?: boolean;
+  error?: string;
 }
 
-function homNayIso(): string {
-  const homNay = new Date();
-  const thang = String(homNay.getMonth() + 1).padStart(2, '0');
-  const ngay = String(homNay.getDate()).padStart(2, '0');
-  return `${homNay.getFullYear()}-${thang}-${ngay}`;
-}
-
+/**
+ * DT-02 — Popup xác nhận đổi điểm.
+ * Dùng <dialog> gốc để có sẵn focus trap; tiêu điểm mở đầu rơi vào Hủy, không
+ * vào nút xác nhận. Mọi thay đổi điểm/tồn kho thuộc lớp điều khiển.
+ */
 export default function GDXacNhanDoiQua({
-  khachHang,
-  quaTang,
-  tongDiem,
-  onDoiThanhCong,
-  onQuayLai,
+  open,
+  qua,
+  diemTruoc,
+  diemSau,
+  onHuy,
+  onXacNhan,
+  busy = false,
+  error,
 }: GDXacNhanDoiQuaProps) {
-  const [dangGui, setDangGui] = useState(false);
-  const [loi, setLoi] = useState('');
-
-  const loiRef = useRef<HTMLParagraphElement>(null);
-  const duDiem = tongDiem >= quaTang.soDiem;
-  const conHang = quaTang.soLuong > 0;
-  const diemConLai = tongDiem - quaTang.soDiem;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (loi) {
-      requestAnimationFrame(() => loiRef.current?.focus());
-    }
-  }, [loi]);
-
-  async function xacNhanDoi() {
-    if (dangGui || !duDiem || !conHang) {
+    const dialog = dialogRef.current;
+    if (!dialog) {
       return;
     }
 
-    setDangGui(true);
-    setLoi('');
-    try {
-      const voucher = await HTTPClient.fetch<VoucherKhachHang>('/api/doi-diem', {
-        method: 'POST',
-        body: JSON.stringify({ quaTangId: quaTang.id }),
-      });
-      onDoiThanhCong(voucher);
-    } catch (error) {
-      setLoi(
-        thongDiepLoi(
-          error,
-          'Không thể đổi quà. Điểm hoặc tồn kho có thể vừa thay đổi; vui lòng quay lại chọn lại.',
-        ),
-      );
-    } finally {
-      setDangGui(false);
+    if (!open) {
+      if (dialog.open) {
+        dialog.close();
+      }
+      return;
     }
-  }
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onHuy();
+      }
+    };
+    dialog.addEventListener('keydown', onEscape, true);
+
+    if (!dialog.open) {
+      const active = document.activeElement;
+      triggerRef.current =
+        active instanceof HTMLElement && active !== document.body ? active : null;
+      dialog.showModal();
+    }
+    cancelRef.current?.focus({ preventScroll: true });
+
+    return () => {
+      dialog.removeEventListener('keydown', onEscape, true);
+      if (dialog.open) {
+        dialog.close();
+      }
+      const trigger = triggerRef.current;
+      triggerRef.current = null;
+      if (trigger?.isConnected) {
+        trigger.focus({ preventScroll: true });
+      }
+    };
+  }, [open, onHuy]);
+
+  const xacNhan = () => {
+    if (busy) {
+      return;
+    }
+    onXacNhan();
+  };
 
   return (
-    <FlowFrame
-      khachHang={khachHang}
-      kicker="Đổi điểm · Xác nhận"
-      title="Xác nhận đổi quà"
-      description="Kiểm tra lại quà và điểm trước khi xác nhận. Máy chủ sẽ kiểm tra lại điểm, tồn kho và ghi phiếu trong một giao dịch."
+    <dialog
+      ref={dialogRef}
+      id="hopXacNhanDoiQua"
+      className="reward-dialog"
+      aria-labelledby="tieuDeXacNhanDoiQua"
     >
-      <section className="flow-card" aria-labelledby="tieuDeXacNhanDoiQua">
-        <div className="section-head">
-          <h2 id="tieuDeXacNhanDoiQua">Tóm tắt đổi điểm</h2>
-          <p className="section-note">{quaTang.moTa || 'Quà tặng thành viên CineMan'}</p>
-        </div>
+      <header className="reward-dialog-header">
+        <h2 id="tieuDeXacNhanDoiQua">Xác nhận đổi điểm</h2>
+      </header>
 
-        <p
-          className="form-alert"
-          id="outThongBao"
-          role="alert"
-          tabIndex={-1}
-          ref={loiRef}
-          aria-live="assertive"
-        >
-          {loi}
-        </p>
+      <div className="reward-dialog-body">
+        {error && (
+          <Notice tone="error" id="outThongBao">
+            {error}
+          </Notice>
+        )}
 
-        {!duDiem ? (
-          <p className="form-alert form-alert--static" role="alert">
-            Bạn còn thiếu {(quaTang.soDiem - tongDiem).toLocaleString('vi-VN')} điểm để đổi quà này.
-          </p>
-        ) : null}
-
-        {!conHang ? (
-          <p className="form-alert form-alert--static" role="alert">
-            Quà tặng này đã hết hàng. Vui lòng chọn quà khác.
-          </p>
-        ) : null}
-
-        <dl className="totals">
+        <dl className="summary-list">
           <div>
-            <dt>Quà tặng</dt>
+            <dt>Phần thưởng đổi</dt>
             <dd>
-              {quaTang.tenQua} ({maQuaTang(quaTang.id)})
+              {qua.ten}
+              <br />
+              <span className="muted">Mã {qua.ma}</span>
             </dd>
           </div>
           <div>
-            <dt>Điểm hiện có</dt>
-            <dd>{tongDiem.toLocaleString('vi-VN')} điểm</dd>
+            <dt>Điểm tích lũy hiện có</dt>
+            <dd>{diemTruoc} điểm</dd>
           </div>
           <div>
-            <dt>Điểm trừ</dt>
-            <dd>−{quaTang.soDiem.toLocaleString('vi-VN')} điểm</dd>
-          </div>
-          <div className="total-line--grand">
-            <dt>Điểm còn lại</dt>
-            <dd>{Math.max(0, diemConLai).toLocaleString('vi-VN')} điểm</dd>
+            <dt>Số điểm quy đổi bị trừ</dt>
+            <dd>−{qua.diem} điểm</dd>
           </div>
           <div>
-            <dt>Hạn voucher dự kiến</dt>
-            <dd>{hanVoucher(homNayIso())} (30 ngày kể từ ngày nhận)</dd>
+            <dt>Số điểm còn lại sau đổi</dt>
+            <dd>
+              <strong>{diemSau} điểm</strong>
+            </dd>
           </div>
-          {quaTang.loaiQua === 'GIAM_GIA' && quaTang.giaTriGiam ? (
-            <div>
-              <dt>Giá trị giảm</dt>
-              <dd>{dinhDangTien(quaTang.giaTriGiam)}</dd>
-            </div>
-          ) : null}
           <div>
-            <dt>Ngày nhận dự kiến</dt>
-            <dd>{dinhDangNgay(homNayIso())}</dd>
+            <dt>Thời hạn sử dụng voucher</dt>
+            <dd>30 ngày kể từ ngày đổi điểm</dd>
           </div>
         </dl>
+      </div>
 
-        <p className="section-note">
-          Sau khi xác nhận, hệ thống tạo phiếu đổi điểm và voucher mới. Nếu bất kỳ bước ghi nào thất bại,
-          điểm và tồn kho được hoàn nguyên.
-        </p>
-
-        <div className="flow-actions">
-          <button
-            className="btn btn--primary"
-            id="btnXacNhan"
-            type="button"
-            disabled={dangGui || !duDiem || !conHang}
-            aria-busy={dangGui}
-            onClick={() => void xacNhanDoi()}
-          >
-            {dangGui ? 'Đang đổi quà…' : 'Xác nhận đổi quà'}
-          </button>
-          <button
-            className="btn btn--ghost"
-            id="btnQuayLai"
-            type="button"
-            disabled={dangGui}
-            onClick={onQuayLai}
-          >
-            Chọn quà khác
-          </button>
-        </div>
-      </section>
-    </FlowFrame>
+      <footer className="reward-dialog-footer">
+        <button
+          ref={cancelRef}
+          type="button"
+          id="btnQuayLai"
+          className="btn btn--ghost"
+          onClick={onHuy}
+        >
+          Hủy
+        </button>
+        <button
+          type="button"
+          id="btnXacNhan"
+          className="btn btn--primary"
+          aria-disabled={busy || undefined}
+          aria-busy={busy || undefined}
+          onClick={xacNhan}
+        >
+          Xác nhận đổi
+        </button>
+      </footer>
+    </dialog>
   );
 }
