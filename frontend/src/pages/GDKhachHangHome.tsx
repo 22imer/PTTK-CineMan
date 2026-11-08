@@ -1,23 +1,18 @@
 import { useEffect, useRef } from 'react';
 import type { KhachHang } from '../types';
+import { dinhDangNgay } from '../utils';
 
 interface GDKhachHangHomeProps {
   khachHang: KhachHang;
+  onDatVe: () => void;
+  onDoiDiemThuong: () => void;
 }
 
-/** Ngày ISO từ backend (YYYY-MM-DD) → dd/mm/yyyy để hiển thị. */
-function dinhDangNgay(ngayIso: string): string {
-  if (!ngayIso) {
-    return '—';
-  }
-  const [nam, thang, ngay] = ngayIso.split('-');
-  if (!nam || !thang || !ngay) {
-    return ngayIso;
-  }
-  return `${ngay}/${thang}/${nam}`;
-}
-
-export default function GDKhachHangHome({ khachHang }: GDKhachHangHomeProps) {
+export default function GDKhachHangHome({
+  khachHang,
+  onDatVe,
+  onDoiDiemThuong,
+}: GDKhachHangHomeProps) {
   const hoTen = khachHang.hoTen?.trim() || khachHang.username;
   const diem = Number.isFinite(khachHang.tongDiem) ? khachHang.tongDiem : 0;
   const hang = khachHang.hangThanhVien?.trim() || 'Chưa xếp hạng';
@@ -92,17 +87,14 @@ export default function GDKhachHangHome({ khachHang }: GDKhachHangHomeProps) {
           <article className="action-card">
             <div>
               <h3>Đặt vé trực tuyến</h3>
-              <p>Chọn phim, suất chiếu và ghế ngồi cho buổi xem của bạn.</p>
-              <p className="action-status" id="datVeChuaKhaDung">
-                Chưa triển khai — chức năng đặt vé sẽ mở ở bước 3.
-              </p>
+              <p>Chọn phim, ngày chiếu, khung giờ, suất chiếu và ghế ngồi cho buổi xem của bạn.</p>
+              <p className="action-status">Giữ ghế 5 phút và thanh toán ngay trên web.</p>
             </div>
             <button
               className="btn btn--ghost"
               id="btnDatVe"
               type="button"
-              disabled
-              aria-describedby="datVeChuaKhaDung"
+              onClick={onDatVe}
             >
               Đặt vé
             </button>
@@ -111,17 +103,14 @@ export default function GDKhachHangHome({ khachHang }: GDKhachHangHomeProps) {
           <article className="action-card">
             <div>
               <h3>Đổi điểm thưởng</h3>
-              <p>Dùng điểm tích lũy để nhận quà tặng và voucher tại rạp.</p>
-              <p className="action-status" id="doiDiemChuaKhaDung">
-                Chưa triển khai — chức năng đổi điểm sẽ mở ở bước 4.
-              </p>
+              <p>Dùng điểm tích lũy để nhận voucher giảm giá, vé phim hoặc bắp nước tại rạp.</p>
+              <p className="action-status">Điểm hiện có: {diem.toLocaleString('vi-VN')} điểm.</p>
             </div>
             <button
               className="btn btn--ghost"
               id="btnDoiDiemThuong"
               type="button"
-              disabled
-              aria-describedby="doiDiemChuaKhaDung"
+              onClick={onDoiDiemThuong}
             >
               Đổi điểm thưởng
             </button>
