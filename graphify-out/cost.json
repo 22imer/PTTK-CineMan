@@ -1,0 +1,15 @@
+{
+  "runs": [
+    {
+      "date": "2026-11-08T18:26:48.473195+00:00",
+      "input_tokens": null,
+      "output_tokens": null,
+      "token_usage_available": false,
+      "files": 78
+    }
+  ],
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "totals_exclude_unmeasured_runs": true,
+  "usage_note": "Totals count measured usage only. This run has unknown usage because the agent tool did not expose it; null is not zero cost."
+}
