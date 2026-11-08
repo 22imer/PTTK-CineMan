@@ -1,0 +1,78 @@
+@startuml hinh-3-22-hoat-dong-doi-diem
+' Hình 3.22 . Biểu đồ hoạt động chức năng Đổi điểm thưởng lấy quà tặng/vé (pha thiết kế)
+' Nguồn: Hình 3.15–3.19 và mục 3.3.3 của bao-cao-hoan-thien.md (lớp thiết kế nhóm vẽ trong Chuong3-gen.docx)
+'       capNhatSoLuong có tham số; cả thucHienDoiDiem là một giao dịch.
+
+' Kiểu dùng chung: bản sao _skin.puml để dán thẳng lên web; sửa _skin.puml thì sửa cả ở đây
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 200
+skinparam roundCorner 6
+skinparam ArrowFontSize 13
+skinparam ClassFontSize 14
+skinparam ClassAttributeFontSize 13
+skinparam SequenceMessageAlignment center
+
+start
+partition "Xử lí tại GDKhachHangHome.ts" {
+  :Hiển thị giao diện quản lý tài khoản (kh);
+}
+-> [click Đổi điểm thưởng];
+partition "Xử lí tại GDChonQua.ts" {
+  :Lấy danh sách phần thưởng\n<i>QuaTangDAO.laydsQuaTang() : List<QuaTang></i>;
+  note right
+    Gọi qua HTTPClient.fetch()
+    và RESTController.requestMapping()
+  end note
+  :Đọc lịch sử theo HttpSession.khachHangId\n<i>GiaoDichDoiDiemDAO.layLichSuTheoKhachHang(idKhachHang) : List<VoucherKhachHang></i>;
+  :Hiển thị điểm, danh sách phần thưởng (tblListQua)\nvà lịch sử (tblLichSuDoiQua), mới nhất trước;
+  note right
+    GET /api/quatang kèm lichSuDoiQua
+    GET /api/doi-diem/lich-su đọc riêng cùng dữ liệu
+    Chưa có phiên: HTTP 401, không trả lịch sử
+    Rỗng: "Chưa có lịch sử đổi quà."
+    Điểm còn lại lấy từ phiếu tại lúc đổi
+  end note
+  repeat
+    :Nhận phần thưởng khách hàng chọn (chonQua);
+    :Kiểm tra số lượng tồn kho\n<i>QuaTangDAO.kiemTraSoLuong(idQua) : boolean</i>;
+    :Kiểm tra điểm của khách hàng\n<i>KhachHangDAO.kiemTraDiem(maKhachHang, diem) : boolean</i>;
+    if (Còn hàng và đủ điểm?) then (không)
+      :Hiển thị thông báo phần thưởng không khả dụng\nhoặc không đủ điểm;
+    else (có)
+    endif
+  repeat while (Phải chọn lại phần thưởng?) is (có) not (không)
+}
+partition "Xử lí tại GDXacNhanDoiQua.ts" {
+  :Hiển thị thông tin giao dịch đổi quà (kh, qt);
+  if (Khách hàng click?) then (Quay lại)
+    :Điều hướng về GDChonQua.ts;
+    detach
+  else (Xác nhận đổi)
+    :Kiểm tra lại điểm và tồn kho\n<i>KhachHangDAO.kiemTraDiem(maKhachHang, diem) : boolean</i>\n<i>QuaTangDAO.kiemTraSoLuong(idQua) : boolean</i>;
+    if (Còn hợp lệ?) then (không)
+      :Hiển thị thông báo đổi quà không thành công (outThongBao),\nđiều hướng về GDChonQua.ts;
+      detach
+    else (có)
+      :Trừ điểm của khách hàng\n<i>KhachHangDAO.truDiem(maKhachHang, diem) : boolean</i>;
+      :Giảm số lượng tồn kho\n<i>QuaTangDAO.capNhatSoLuong(idQua, soLuong) : boolean</i>;
+      :Ghi phiếu đổi điểm\n<i>GiaoDichDoiDiemDAO.luuGiaoDich(gd) : int</i>;
+      :Tạo voucher từ phiếu\n<i>VoucherKhachHangDAO.luuVoucher(vc) : boolean</i>;
+      note right
+        Một giao dịch thucHienDoiDiem:
+        ghi phiếu trước, tạo voucher sau
+      end note
+    endif
+  endif
+}
+partition "Xử lí tại GDThongBao" {
+  :Hiển thị thông báo đổi điểm thành công\n(outPDQ, vc);
+}
+-> [click Xác nhận];
+partition "Xử lí tại GDChonQua.ts " {
+  :Tải lại GET /api/quatang;\nhiển thị điểm, tồn kho và lịch sử có phiếu vừa đổi;
+}
+stop
+@enduml

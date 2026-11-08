@@ -54,4 +54,5 @@ export const quaMau: QuaTangUI[] = [
 export const doiDiemMau: DoiDiemUI = {
   maPhieu: 'PDT-001', khachHang: khachMau.hoTen, thoiGian: '11:03 25/09/2026', qua: quaMau[1],
   diemTruoc: 250, diemTru: 100, diemSau: 150, maVoucher: 'VC-VIDU-12345', hanSuDung: '30 ngày kể từ ngày đổi điểm',
+  trangThaiVoucher: 'CHUA_SU_DUNG', ngaySuDung: null,
 };

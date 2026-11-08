@@ -77,4 +77,6 @@ export interface DoiDiemUI {
   diemSau: number;
   maVoucher: string;
   hanSuDung: string;
+  trangThaiVoucher: string;
+  ngaySuDung: string | null;
 }

@@ -83,6 +83,89 @@ class M1IntegrationTest {
     }
 
     @Test
+    void historyKeepsReceiptSnapshotWhenPaymentChangesBalanceAndVoucherStatus() throws Exception {
+        JsonNode seed = ok(get("/api/quatang"), null).path("lichSuDoiQua").path(0);
+        assertThat(seed.path("maVoucher").asText()).isEqualTo("VC-VIDU-12345");
+        assertThat(seed.path("trangThai").asText()).isEqualTo("CHUA_SU_DUNG");
+        assertThat(seed.path("ngaySuDung").isNull()).isTrue();
+        assertThat(seed.path("ngayNhan").asText()).isEqualTo(java.time.LocalDate.now().toString());
+        JsonNode receipt = seed.path("giaoDichDoiDiem");
+        assertThat(receipt.path("id").asInt()).isEqualTo(1);
+        assertThat(receipt.path("soDiemTru").asInt()).isEqualTo(100);
+        assertThat(receipt.path("diemConLai").asInt()).isEqualTo(150);
+        assertThat(receipt.path("quaTang").path("id").asInt()).isEqualTo(2);
+        assertThat(receipt.path("quaTang").path("tenQua").asText()).isEqualTo("Vé xem phim 2D Standard");
+        LocalDateTime stored = jdbc.queryForObject(
+                "SELECT thoiGian FROM tblGiaoDichDoiDiem WHERE id=1", LocalDateTime.class);
+        assertThat(LocalDateTime.parse(receipt.path("thoiGian").asText())).isEqualTo(stored.withNano(0));
+
+        int id = create(List.of(3, 11)).path("hoaDon").path("id").asInt();
+        ok(post("/api/hoadon/apdung-voucher"), Map.of("hoaDonId", id, "maVoucher", "VC-VIDU-12345"));
+        ok(post("/api/hoadon/" + id + "/thanh-toan"), null);
+        JsonNode updated = ok(get("/api/doi-diem/lich-su"), null).get(0);
+        assertThat(number("SELECT tongDiem FROM tblKhachHang WHERE tblThanhVienId=1")).isEqualTo(260);
+        assertThat(updated.path("giaoDichDoiDiem")).isEqualTo(receipt);
+        assertThat(updated.path("trangThai").asText()).isEqualTo("DA_SU_DUNG");
+        assertThat(updated.path("ngaySuDung").asText()).isEqualTo(java.time.LocalDate.now().toString());
+    }
+
+    @Test
+    void historyRefreshesSuccessfulExchangesAndOrdersByTimeThenId() throws Exception {
+        JsonNode first = ok(post("/api/doi-diem"), Map.of("quaTangId", 2));
+        JsonNode second = ok(post("/api/doi-diem"), Map.of("quaTangId", 1));
+        int firstId = first.path("giaoDichDoiDiem").path("id").asInt();
+        int secondId = second.path("giaoDichDoiDiem").path("id").asInt();
+        LocalDateTime afterSeed = jdbc.queryForObject(
+                "SELECT thoiGian FROM tblGiaoDichDoiDiem WHERE id=1", LocalDateTime.class).plusMinutes(1);
+        jdbc.update("UPDATE tblGiaoDichDoiDiem SET thoiGian=? WHERE id=?", afterSeed.plusMinutes(1), firstId);
+        jdbc.update("UPDATE tblGiaoDichDoiDiem SET thoiGian=? WHERE id=?", afterSeed, secondId);
+        JsonNode history = ok(get("/api/doi-diem/lich-su"), null);
+        assertThat(voucherCodes(history)).containsExactly(
+                first.path("maVoucher").asText(), second.path("maVoucher").asText(), "VC-VIDU-12345");
+        assertThat(history.get(0).path("giaoDichDoiDiem").path("soDiemTru").asInt()).isEqualTo(100);
+        assertThat(history.get(0).path("giaoDichDoiDiem").path("diemConLai").asInt()).isEqualTo(150);
+        assertThat(history.get(1).path("giaoDichDoiDiem").path("soDiemTru").asInt()).isEqualTo(50);
+        assertThat(history.get(1).path("giaoDichDoiDiem").path("diemConLai").asInt()).isEqualTo(100);
+        assertThat(number("SELECT diemConLai FROM tblGiaoDichDoiDiem WHERE id=" + secondId)).isEqualTo(100);
+        jdbc.update("UPDATE tblGiaoDichDoiDiem SET thoiGian=? WHERE id IN (?,?)", afterSeed, firstId, secondId);
+        assertThat(voucherCodes(ok(get("/api/quatang"), null).path("lichSuDoiQua")))
+                .containsExactly(second.path("maVoucher").asText(), first.path("maVoucher").asText(), "VC-VIDU-12345");
+    }
+
+    @Test
+    void historyUsesSessionOwnerIgnoresSpoofedIdsAndSupportsEmptyCustomers() throws Exception {
+        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'history_owner','unused','Other','2000-01-01','Nam','X','history@example.com','0999999997','KHACH_HANG')");
+        jdbc.update("INSERT INTO tblKhachHang (tblThanhVienId,ngayDangKy,tongDiem) VALUES (999,CURRENT_DATE,250)");
+        MockHttpSession other = new MockHttpSession();
+        other.setAttribute("khachHangId", 999);
+        MvcResult empty = call(get("/api/doi-diem/lich-su?khachHangId=1"), other, null);
+        assertThat(empty.getResponse().getStatus()).isEqualTo(200);
+        assertThat(data(empty).isArray()).isTrue();
+        assertThat(data(empty).isEmpty()).isTrue();
+        JsonNode catalogue = data(call(get("/api/quatang?khachHangId=1"), other, null));
+        assertThat(catalogue.path("lichSuDoiQua").isArray()).isTrue();
+        assertThat(catalogue.path("lichSuDoiQua").isEmpty()).isTrue();
+        JsonNode voucher = data(call(post("/api/doi-diem"), other, Map.of("quaTangId", 1, "khachHangId", 1)));
+        JsonNode own = data(call(get("/api/doi-diem/lich-su?khachHangId=1&customerId=1"), other, null));
+        assertThat(voucherCodes(own)).containsExactly(voucher.path("maVoucher").asText());
+        assertThat(own.get(0).path("giaoDichDoiDiem").path("khachHang").path("id").asInt()).isEqualTo(999);
+        assertThat(voucherCodes(ok(get("/api/doi-diem/lich-su?khachHangId=999"), null)))
+                .containsExactly("VC-VIDU-12345");
+        assertThat(voucherCodes(ok(get("/api/quatang?khachHangId=999"), null).path("lichSuDoiQua")))
+                .containsExactly("VC-VIDU-12345");
+    }
+
+    @Test
+    void failedExchangesNeverEnterHistory() throws Exception {
+        JsonNode before = ok(get("/api/doi-diem/lich-su"), null);
+        jdbc.update("UPDATE tblKhachHang SET tongDiem=40 WHERE tblThanhVienId=1");
+        fails(post("/api/doi-diem"), Map.of("quaTangId", 2));
+        jdbc.update("UPDATE tblKhachHang SET tongDiem=250 WHERE tblThanhVienId=1");
+        fails(post("/api/doi-diem"), Map.of("quaTangId", 4));
+        assertThat(ok(get("/api/doi-diem/lich-su"), null)).isEqualTo(before);
+    }
+
+    @Test
     void catalogueFiltersAndSeatPricesComeFromServer() throws Exception {
         JsonNode phim = ok(get("/api/phim"), null);
         assertThat(phim.get(0).path("tenPhim").asText()).isEqualTo("Mai");
@@ -234,6 +317,7 @@ class M1IntegrationTest {
 
     @Test
     void exchangeFailureAfterReceiptRollsBackPointsStockAndReceipt() throws Exception {
+        JsonNode historyBefore = ok(get("/api/doi-diem/lich-su"), null);
         jdbc.execute("ALTER TABLE tblVoucherKhachHang ADD CONSTRAINT test_reject_new CHECK (tblGiaoDichDoiDiemId=1)");
         try {
             MvcResult result=call(post("/api/doi-diem"),session,Map.of("quaTangId",2));
@@ -243,6 +327,7 @@ class M1IntegrationTest {
             assertThat(number("SELECT soLuong FROM tblQuaTang WHERE id=2")).isEqualTo(45);
             assertThat(count("tblGiaoDichDoiDiem")).isEqualTo(1);
             assertThat(count("tblVoucherKhachHang")).isEqualTo(1);
+            assertThat(ok(get("/api/doi-diem/lich-su"), null)).isEqualTo(historyBefore);
         } finally {
             jdbc.execute("ALTER TABLE tblVoucherKhachHang DROP CONSTRAINT test_reject_new");
         }
@@ -342,10 +427,13 @@ class M1IntegrationTest {
 
     @Test
     void anonymousCannotReadOrMutateBusinessData() throws Exception {
-        for (String path : List.of("/api/phim","/api/quatang","/api/ghe?suatChieuId=3")) {
+        for (String path : List.of("/api/phim","/api/quatang","/api/ghe?suatChieuId=3","/api/doi-diem/lich-su?khachHangId=1")) {
             MvcResult result=call(get(path),null,null);
             assertThat(result.getResponse().getStatus()).isEqualTo(401);
             assertThat(result.getRequest().getSession(false)).isNull();
+            assertThat(root(result).path("success").asBoolean()).isFalse();
+            assertThat(root(result).hasNonNull("data")).isFalse();
+            assertThat(root(result).path("message").asText()).isNotBlank();
         }
     }
 
@@ -383,6 +471,10 @@ class M1IntegrationTest {
         assertThat(result.getResponse().getStatus()).isBetween(400,499);
         assertThat(root(result).path("success").asBoolean()).isFalse();
         assertThat(root(result).path("message").asText()).isNotBlank();
+    }
+    private List<String> voucherCodes(JsonNode history) {
+        return java.util.stream.IntStream.range(0, history.size())
+                .mapToObj(i -> history.get(i).path("maVoucher").asText()).toList();
     }
     private JsonNode root(MvcResult r) throws Exception {return json.readTree(r.getResponse().getContentAsString(StandardCharsets.UTF_8));}
     private JsonNode data(MvcResult r) throws Exception {return root(r).path("data");}

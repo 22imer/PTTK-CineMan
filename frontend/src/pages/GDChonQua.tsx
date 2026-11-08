@@ -1,10 +1,11 @@
 import { DataTable, ListState, Notice, Screen } from '../ui/common';
-import type { QuaTangUI, ViewState } from '../ui/models';
+import type { DoiDiemUI, QuaTangUI, ViewState } from '../ui/models';
 
 export interface GDChonQuaProps {
   khachHang: string;
   diem: number;
   qua: QuaTangUI[];
+  lichSu: DoiDiemUI[];
   state?: ViewState;
   error?: string;
   onChon: (qua: QuaTangUI) => void;
@@ -19,6 +20,7 @@ export default function GDChonQua({
   khachHang,
   diem,
   qua,
+  lichSu,
   state = 'ready',
   error,
   onChon,
@@ -96,6 +98,51 @@ export default function GDChonQua({
           </DataTable>
         </ListState>
       </div>
+      <section aria-labelledby="tieuDeLichSu">
+        <h2 id="tieuDeLichSu">Lịch sử đổi quà</h2>
+        <p className="muted">Mới nhất trước. Điểm còn lại là số dư tại thời điểm đổi.</p>
+        <div id="tblLichSuDoiQua">
+          <ListState state={state === 'empty' ? 'ready' : state} error={error}>
+            {lichSu.length === 0 ? (
+              <p className="empty-state">Chưa có lịch sử đổi quà.</p>
+            ) : (
+              <DataTable caption="Lịch sử phiếu đổi quà">
+                <thead>
+                  <tr>
+                    <th scope="col">Mã phiếu</th>
+                    <th scope="col">Ngày đổi</th>
+                    <th scope="col">Phần thưởng</th>
+                    <th scope="col" className="numeric">Điểm đã trừ</th>
+                    <th scope="col" className="numeric">Điểm còn lại lúc đổi</th>
+                    <th scope="col">Mã voucher</th>
+                    <th scope="col">Hạn sử dụng</th>
+                    <th scope="col">Trạng thái voucher</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lichSu.map((phieu) => (
+                    <tr key={phieu.maPhieu}>
+                      <th scope="row">{phieu.maPhieu}</th>
+                      <td>{phieu.thoiGian}</td>
+                      <td>{phieu.qua.ma} · {phieu.qua.ten}</td>
+                      <td className="numeric">{phieu.diemTru}</td>
+                      <td className="numeric">{phieu.diemSau}</td>
+                      <td>{phieu.maVoucher}</td>
+                      <td>{phieu.hanSuDung}</td>
+                      <td>
+                        <span className="status-pill">
+                          {phieu.trangThaiVoucher === 'DA_SU_DUNG' ? 'Đã sử dụng' : 'Chưa sử dụng'}
+                        </span>
+                        {phieu.ngaySuDung && <p>Ngày dùng: {phieu.ngaySuDung}</p>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </DataTable>
+            )}
+          </ListState>
+        </div>
+      </section>
     </Screen>
   );
 }

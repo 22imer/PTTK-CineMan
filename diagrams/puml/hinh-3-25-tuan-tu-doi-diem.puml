@@ -1,0 +1,114 @@
+@startuml hinh-3-25-tuan-tu-doi-diem
+' Hình 3.25 . Biểu đồ tuần tự chức năng Đổi điểm thưởng lấy quà tặng/vé (pha thiết kế, kịch bản V3)
+' Nguồn: Hình 3.19 và mục 3.3.3 của bao-cao-hoan-thien.md; kịch bản V2 mục 2.5.3
+'       cả thucHienDoiDiem là một giao dịch; capNhatSoLuong có tham số.
+
+' Kiểu dùng chung: bản sao _skin.puml để dán thẳng lên web; sửa _skin.puml thì sửa cả ở đây
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 200
+skinparam roundCorner 6
+skinparam ArrowFontSize 13
+skinparam ClassFontSize 14
+skinparam ClassAttributeFontSize 13
+skinparam SequenceMessageAlignment center
+
+hide footbox
+autonumber "0:"
+
+actor "Khách hàng" as KH
+boundary "GDKhachHangHome.ts" as HOME
+boundary "GDChonQua.ts" as CQ
+boundary "GDXacNhanDoiQua.ts" as XQ
+boundary "GDThongBao" as TB
+control "HTTPClient" as HC
+control "RESTController" as RC
+control "QuaTangDAO" as QTD
+control "KhachHangDAO" as KHD
+control "GiaoDichDoiDiemDAO" as GDD
+control "VoucherKhachHangDAO" as VKD
+entity "QuaTang" as QTE
+entity "GiaoDichDoiDiem" as GDE
+entity "VoucherKhachHang" as VKE
+
+activate HOME
+KH -> HOME : click Đổi điểm thưởng
+HOME -> CQ : gọi
+deactivate HOME
+activate CQ
+CQ -> HC ++ : fetch("GET /api/quatang")
+HC -> RC ++ : requestMapping()
+RC -> QTD ++ : laydsQuaTang()
+QTD -> QTE ++ : khởi tạo, setter
+QTE --> QTD -- : trả về
+QTD --> RC -- : List<QuaTang>
+RC -> GDD ++ : layLichSuTheoKhachHang(HttpSession.khachHangId)
+note right of GDD
+  tblGiaoDichDoiDiem nối quà và voucher qua phiếu
+  WHERE khách = id trong phiên, bỏ qua id client gửi
+  ORDER BY thoiGian DESC, id DESC
+  diemConLai là ảnh chụp tại lúc đổi
+end note
+GDD --> RC -- : List<VoucherKhachHang> kèm phiếu + quà
+RC --> HC -- : trả về
+HC --> CQ -- : trả về
+CQ --> KH : hiển thị điểm, danh mục và tblLichSuDoiQua
+note over CQ, RC : Chưa có phiên: HTTP 401; lịch sử rỗng: "Chưa có lịch sử đổi quà."\nGET /api/doi-diem/lich-su đọc riêng cùng dữ liệu
+
+KH -> CQ : click đổi ở 1 phần thưởng
+CQ -> HC ++ : fetch()
+HC -> RC ++ : requestMapping()
+RC -> QTD ++ : kiemTraSoLuong(idQua)
+QTD --> RC -- : boolean
+RC -> KHD ++ : kiemTraDiem(maKhachHang, diem)
+KHD --> RC -- : boolean
+RC --> HC -- : trả về
+HC --> CQ -- : trả về
+CQ -> XQ : gọi
+deactivate CQ
+activate XQ
+XQ --> KH : hiển thị thông tin giao dịch đổi quà
+
+KH -> XQ : click Xác nhận đổi
+XQ -> HC ++ : fetch()
+HC -> RC ++ : requestMapping()
+RC -> KHD ++ : kiemTraDiem(maKhachHang, diem)
+KHD --> RC -- : boolean
+RC -> QTD ++ : kiemTraSoLuong(idQua)
+QTD --> RC -- : boolean
+RC -> KHD ++ : truDiem(maKhachHang, diem)
+KHD --> RC -- : boolean
+RC -> QTD ++ : capNhatSoLuong(idQua, soLuong)
+QTD --> RC -- : boolean
+RC -> GDE ++ : new GiaoDichDoiDiem(kh, qt, soDiemTru, diemConLai, thoiGian)
+GDE --> RC -- : gd
+RC -> GDD ++ : luuGiaoDich(gd)
+GDD --> RC -- : idGiaoDich
+RC -> VKE ++ : new VoucherKhachHang(gd, maVoucher, ngayNhan, trangThai)
+VKE --> RC -- : vc
+RC -> VKD ++ : luuVoucher(vc)
+VKD --> RC -- : idVoucher / true
+note over RC, GDD : một giao dịch thucHienDoiDiem: ghi phiếu trước, tạo voucher sau
+RC --> HC -- : trả về
+HC --> XQ -- : trả về
+XQ -> TB : gọi
+deactivate XQ
+activate TB
+TB --> KH : thông báo đổi điểm thành công, mã phiếu và voucher
+KH -> TB : click Xác nhận
+TB -> CQ : gọi
+deactivate TB
+activate CQ
+CQ -> HC ++ : fetch("GET /api/quatang")
+HC -> RC ++ : requestMapping()
+RC -> QTD ++ : laydsQuaTang()
+QTD --> RC -- : List<QuaTang>
+RC -> GDD ++ : layLichSuTheoKhachHang(HttpSession.khachHangId)
+GDD --> RC -- : lịch sử có phiếu mới
+RC --> HC -- : {dsQuaTang, tongDiem, lichSuDoiQua}
+HC --> CQ -- : trả về
+CQ --> KH : hiển thị điểm, tồn kho và lịch sử vừa cập nhật
+deactivate CQ
+@enduml
