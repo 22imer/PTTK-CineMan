@@ -3,10 +3,12 @@ package com.cineman.dao;
 import com.cineman.entity.GiaoDichDoiDiem;
 import com.cineman.entity.KhachHang;
 import com.cineman.entity.QuaTang;
+import com.cineman.entity.VoucherKhachHang;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -23,6 +25,21 @@ public class GiaoDichDoiDiemDAO extends DAO {
 
     public GiaoDichDoiDiemDAO(JdbcTemplate jdbcTemplate) {
         super(jdbcTemplate);
+    }
+
+    /** Phiếu của đúng khách trong phiên, mới nhất trước; số dư lấy từ ảnh chụp trên phiếu. */
+    public List<VoucherKhachHang> layLichSuTheoKhachHang(int idKhachHang) {
+        return jdbcTemplate.query("""
+                SELECT vc.id AS voucherId, vc.maVoucher, vc.ngayNhan, vc.ngaySuDung, vc.trangThai,
+                       gd.id AS giaoDichId, gd.thoiGian, gd.soDiemTru, gd.diemConLai,
+                       gd.tblKhachHangId AS giaoDichKhachHangId,
+                       qt.id, qt.tenQua, qt.loaiQua, qt.soDiem, qt.soLuong, qt.moTa, qt.giaTriGiam
+                FROM tblGiaoDichDoiDiem gd
+                JOIN tblQuaTang qt ON qt.id = gd.tblQuaTangId
+                JOIN tblVoucherKhachHang vc ON vc.tblGiaoDichDoiDiemId = gd.id
+                WHERE gd.tblKhachHangId = ?
+                ORDER BY gd.thoiGian DESC, gd.id DESC
+                """, (rs, row) -> VoucherKhachHangDAO.docVoucher(rs), idKhachHang);
     }
 
     /** Lưu phiếu, gán lại id/thời gian vào {@code giaoDich} và trả id sinh ra. */

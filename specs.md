@@ -381,7 +381,7 @@ Công nghệ: Frontend **TypeScript (ts) → React `GD*.tsx`** (chi tiết ARCHI
 | `GDChonGhe.tsx` | `tblListGhe`, `chonGhe`, `btnTiepTuc`, `btnQuayLai` (`kh`, `sc` ẩn) |
 | `GDThanhToan.tsx` | `btnVoucher`, `btnApDungVC`, `btnThanhToan`, `btnQuayLai`; đồng hồ 5 phút (`kh`, `sc`, `ghe[]` ẩn) |
 | `GDXacNhanThanhToan.tsx` | `btnQuayLai` (`hd`, `kh` ẩn) |
-| `GDChonQua.tsx` | `btnTimKiem`, `tblListQua`, `chonQua` |
+| `GDChonQua.tsx` | `btnTimKiem`, `tblListQua`, `chonQua`, `tblLichSuDoiQua` (lịch sử phiếu đổi quà của khách đang đăng nhập) |
 | `GDXacNhanDoiQua.tsx` | `btnXacNhan`, `btnQuayLai`, `outThongBao` (`kh`, `qt` ẩn) |
 | `GDThongBao.tsx` | `outPDQ`, `btnXacNhan` (`vc` ẩn) |
 
@@ -401,7 +401,7 @@ Mã HTTP/thông điệp lỗi chi tiết: ARCHITECTURE.md §7.1. 9 trang còn l�
 - `KhachHangDAO`: `taoHoSo`, `kiemTraDiem`, `truDiem`, `congDiem`
 - `PhimDAO`: `laydsPhim` · `KhungGioDAO`: `laydsKhungGio` · `SuatChieuDAO`: `laydsSuatChieu`
 - `VeDAO`: `tinhtienVe`, `kiemTraVe`, `laydsVe/laydsVeConHieuLuc`, `phatHanhVe→capNhatTrangThaiVe`, `huyVe`
-- `HoaDonDAO`: `taoHoaDon(hd, dsVe)`, `tinhTongTien(dsVe, voucher?)`, `kiemtraHetHan/kiemTraHetHan(idHoaDon)`, `xacNhanThanhToan`, `huyHoaDon(idHoaDon)` · `VoucherKhachHangDAO`: `kiemTraVoucher`, `apDungVoucher`, `luuVoucher(vc)` (thay `taoVoucher`) · `GiaoDichDoiDiemDAO`: `luuGiaoDich(gd)` · `QuaTangDAO`: `laydsQuaTang`, `kiemTraSoLuong`, `capNhatSoLuong(idQua, soLuong)`
+- `HoaDonDAO`: `taoHoaDon(hd, dsVe)`, `tinhTongTien(dsVe, voucher?)`, `kiemtraHetHan/kiemTraHetHan(idHoaDon)`, `xacNhanThanhToan`, `huyHoaDon(idHoaDon)` · `VoucherKhachHangDAO`: `kiemTraVoucher`, `apDungVoucher`, `luuVoucher(vc)` (thay `taoVoucher`) · `GiaoDichDoiDiemDAO`: `luuGiaoDich(gd)`, `layLichSuTheoKhachHang(idKhachHang)` · `QuaTangDAO`: `laydsQuaTang`, `kiemTraSoLuong`, `capNhatSoLuong(idQua, soLuong)`
 
 ### 11.3. Tầng thực thể & phụ trợ
 
@@ -421,7 +421,16 @@ Mỗi lớp biên → 1 activity; mỗi action → 1 phương thức DAO; gọi 
 `GDKhachHangHome.ts` (session `kh`) → click Đặt vé → `GDChonPhim.ts` (`PhimDAO.laydsPhim()`, hiển thị, chọn phim lưu session) → `GDKhungGio.ts` (`KhungGioDAO.laydsKhungGio()`, chọn ngày + khung giờ lưu session) → `GDSuatChieu.ts` (`SuatChieuDAO.laydsSuatChieu(idPhim, ngayChieu, idKhungGio)`, chọn suất lưu session) → `GDChonGhe.ts` (`VeDAO.laydsVe/laydsVeConHieuLuc(idSuatChieu)`, chọn ghế → `VeDAO.kiemTraVe` → `VeDAO.tinhtienVe(suatChieu, ghe)`, Tiếp tục → `HoaDonDAO.taoHoaDon()`, lưu `hoaDon` vào session) → `GDThanhToan.ts` (`HoaDonDAO.tinhTongTien(dsVe)`, đồng hồ 5 phút; áp voucher → `VoucherDAO.kiemTraVoucher` → `apDungVoucher`, không hợp lệ → báo; Thanh toán → `HoaDonDAO.kiemtraHetHan(hd)`: hết hạn → báo + `huyHoaDon()`, còn hạn → `xacNhanThanhToan(idHoaDon)`) → `GDXacNhanThanhToan.ts` (hiển thị hóa đơn đã thanh toán) → Quay lại.
 
 ### 12.3. Đổi điểm
-`GDKhachHangHome.ts` → click Đổi điểm → `GDChonQua.ts` (`QuaTangDAO.laydsQuaTang()`, hiển thị điểm + quà; chọn quà → `QuaTangDAO.kiemTraSoLuong(idQua)` + `KhachHangDAO.kiemTraDiem(maKhachHang, diem)`: còn hàng + đủ điểm → `GDXacNhanDoiQua.ts`, không → báo không khả dụng/không đủ điểm) → `GDXacNhanDoiQua.ts` (hiển thị giao dịch; Quay lại → `GDChonQua.ts`; Xác nhận đổi → kiểm tra lại điểm + tồn kho, không hợp lệ → báo tại `outThongBao` → quay lại; hợp lệ → `truDiem` → `capNhatSoLuong` → `luuGiaoDich(gd)` → `luuVoucher(vc)` — một giao dịch) → `GDThongBao` (báo thành công, mã phiếu + voucher) → Xác nhận → `GDChonQua.ts`.
+`GDKhachHangHome.ts` → click Đổi điểm → `GDChonQua.ts` (`QuaTangDAO.laydsQuaTang()` + `GiaoDichDoiDiemDAO.layLichSuTheoKhachHang(idKhachHang)`, hiển thị điểm + quà + lịch sử phiếu đổi quà; chọn quà → `QuaTangDAO.kiemTraSoLuong(idQua)` + `KhachHangDAO.kiemTraDiem(maKhachHang, diem)`: còn hàng + đủ điểm → `GDXacNhanDoiQua.ts`, không → báo không khả dụng/không đủ điểm) → `GDXacNhanDoiQua.ts` (hiển thị giao dịch; Quay lại → `GDChonQua.ts`; Xác nhận đổi → kiểm tra lại điểm + tồn kho, không hợp lệ → báo tại `outThongBao` → quay lại; hợp lệ → `truDiem` → `capNhatSoLuong` → `luuGiaoDich(gd)` → `luuVoucher(vc)` — một giao dịch) → `GDThongBao` (báo thành công, mã phiếu + voucher) → Xác nhận → `GDChonQua.ts` (tải lại điểm, tồn kho và lịch sử phiếu đổi quà).
+
+Hợp đồng đọc lịch sử (issue #13, chi tiết ARCHITECTURE.md §7.2): `GET /api/doi-diem/lich-su`
+trả `{success: true, data: VoucherKhachHang[]}`; `GET /api/quatang` trả thêm `lichSuDoiQua`
+cùng danh mục và số dư. Lọc duy nhất theo `HttpSession.khachHangId`, bỏ qua id khách do client gửi;
+chưa đăng nhập trả HTTP 401 với `{success: false, message}`. Nối phiếu → quà và voucher → phiếu,
+xếp `thoiGian DESC, id DESC`; mỗi dòng hiện mã phiếu, ngày đổi, mã/tên quà, `soDiemTru`,
+`diemConLai` tại lúc đổi, mã/trạng thái/ngày dùng voucher và hạn `ngayNhan + 30 ngày`.
+Phiếu rollback không xuất hiện; chưa đổi quà hiện “Chưa có lịch sử đổi quà.” ngay trong `GDChonQua`.
+
 
 ---
 

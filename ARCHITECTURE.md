@@ -100,7 +100,7 @@ Controller là Spring `@RestController` (3 controller nghiệp vụ). Frontend k
 | `VeDAO` | `laydsVeConHieuLuc(suatChieu) : List<Ve>`, `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`, `tinhTienVe(suatChieu : SuatChieu, ghe : Ghe) : Ve` (= `giaCoSo + phuThu`, tạo đối tượng `Ve`), `capNhatTrangThaiVe(idHoaDon : int, trangThai : String) : boolean`, `huyVe(idVe : int)` |
 | `HoaDonDAO` | `taoHoaDon(hd : HoaDon, dsVe : List<Ve>) : HoaDon` (1 giao dịch: kiểm tra `(suất,ghế)` + lưu HoaDon + Ve), `tinhTongTien(dsVe : List<Ve>) : int`, `tinhTongTien(dsVe, voucher) : int` (1 hàm, voucher optional — **bỏ** `capNhatTongTien`), `kiemTraHetHan(idHoaDon : int)`, `xacNhanThanhToan(idHoaDon : int)`, `huyHoaDon(idHoaDon : int)` — **bỏ** `timHoaDonTheoIdVe`, bỏ `phatHanhVe` (vé tạo cùng hóa đơn) |
 | `VoucherKhachHangDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`, `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean`, `luuVoucher(vc : VoucherKhachHang) : int`, `layTheoId(id : int) : VoucherKhachHang`, `khoaTheoId(id : int) : VoucherKhachHang` — **bỏ** `taoVoucher()` không tham số |
-| `GiaoDichDoiDiemDAO` | `luuGiaoDich(gd : GiaoDichDoiDiem) : int` |
+| `GiaoDichDoiDiemDAO` | `luuGiaoDich(gd : GiaoDichDoiDiem) : int`, `layLichSuTheoKhachHang(idKhachHang : int) : List<VoucherKhachHang>` |
 | `QuaTangDAO` | `laydsQuaTang() : List<QuaTang>`, `kiemTraSoLuong(idQua : int) : boolean`, `capNhatSoLuong(idQua : int, soLuong : int) : boolean`, `khoaQuaTang(idQua : int) : QuaTang` |
 
 `maKhachHang` trong DAO điểm là id nội bộ dạng chuỗi số; các phép cộng/trừ từ chối số âm.
@@ -140,7 +140,7 @@ ngoài luồng thật ở `/`, chế độ `?ui=VE-02`… (`Preview.tsx`) vẫn 
 | `GDChonGhe.tsx` | Sơ đồ ghế `tblListGhe` (trắng trống / xám đã bán-đang giữ), `dsVe` đã chọn, tối đa 8 ghế, Sweetbox theo cặp |
 | `GDThanhToan.tsx` | Đồng hồ 5 phút, tổng tiền, `inoutVoucher`, `subApDungVoucher`, `subThanhToan`, `subQuayLai` |
 | `GDXacNhanThanhToan.tsx` | Hóa đơn đã thanh toán, mã vé/QR |
-| `GDChonQua.tsx` | `outTongDiem` + `tblListQua` (hết hàng hiển thị "hết hàng") |
+| `GDChonQua.tsx` | `outTongDiem` + `tblListQua` (hết hàng hiển thị "hết hàng") + `tblLichSuDoiQua` (lịch sử phiếu đổi quà, rỗng báo "Chưa có lịch sử đổi quà.") |
 | `GDXacNhanDoiQua.tsx` | Bảng tóm tắt (điểm hiện có − điểm trừ = còn lại, hạn 30 ngày) |
 | `GDThongBao.tsx` | Đổi điểm thành công (`outPDQ`, `vc`) |
 
@@ -164,7 +164,8 @@ Ba nhóm API dùng cùng envelope và phiên server; không tin id khách hàng,
 | | `POST /api/hoadon/apdung-voucher` | `{hoaDonId, maVoucher}` | tóm tắt sau giảm, voucher chưa tiêu |
 | | `POST /api/hoadon/{id}/thanh-toan` | `{thanhCong?: boolean}` (mock, mặc định true) | tóm tắt đã thanh toán; false cho thử lại trong hạn |
 | | `DELETE /api/hoadon/{id}` | — | tóm tắt hủy + nhả ghế; không hủy hóa đơn đã thanh toán |
-| Reward (`DoiDiemController`) | `GET /api/quatang` | — | `{dsQuaTang: List<QuaTang>, tongDiem}` |
+| Reward (`DoiDiemController`) | `GET /api/quatang` | — | `{dsQuaTang: List<QuaTang>, tongDiem, lichSuDoiQua: List<VoucherKhachHang>}` |
+| | `GET /api/doi-diem/lich-su` | — | `List<VoucherKhachHang>` (lịch sử phiếu đổi quà của khách trong phiên) |
 | | `POST /api/doi-diem` | `{quaTangId}` | `VoucherKhachHang` kèm phiếu `giaoDichDoiDiem` |
 
 Tóm tắt hóa đơn: `{hoaDon, tongTienTruocVoucher, tongTien, diemCong, tongDiem, serverNow}`.
@@ -215,6 +216,18 @@ Mã voucher mới sinh duy nhất; `VC-VIDU-12345` chỉ là seed, không cấp 
 object hồ sơ vào `localStorage`/`sessionStorage`; reload trang quay lại `DangNhap` (state mất) dù phiên phía
 server còn hiệu lực. `HTTPClient.fetch<T>(path, init?)` trả `data` và `throw new Error(message)`
 (kể cả lỗi mạng) cho UI hiển thị.
+
+### 7.2. Hợp đồng đọc lịch sử đổi quà (issue #13)
+
+- **Đường dẫn (nhóm Reward — `DoiDiemController`)**:
+  - `GET /api/doi-diem/lich-su` → `{ success: true, data: List<VoucherKhachHang> }`.
+  - `GET /api/quatang` trả kèm `lichSuDoiQua: List<VoucherKhachHang>` cùng `{ dsQuaTang, tongDiem }` để màn `GDChonQua` tải danh mục + số dư + lịch sử đồng bộ trong một lượt.
+- **Chủ sở hữu & bảo mật**: luôn lọc theo `HttpSession.khachHangId` do đăng nhập xác thực; mọi tham số `khachHangId` client gửi trên query/body đều bị bỏ qua. Chưa đăng nhập → HTTP 401 `{ success: false, message }`.
+- **Nguồn dữ liệu & thứ tự**: đọc từ `tblGiaoDichDoiDiem gd` (chỉ chứa phiếu đổi thành công) nối `tblQuaTang qt ON qt.id = gd.tblQuaTangId` và `tblVoucherKhachHang vc ON vc.tblGiaoDichDoiDiemId = gd.id` (liên kết gián tiếp Q3, không thêm bảng/cột). Sắp xếp mới nhất trước: `gd.thoiGian DESC, gd.id DESC`.
+- **Trường trả về mỗi dòng (`VoucherKhachHang`)**:
+  - `id`, `maVoucher`, `ngayNhan` (hạn suy ra = `ngayNhan + 30 ngày`, không lưu cột), `ngaySuDung` (nullable), `trangThai` (`CHUA_SU_DUNG` | `DA_SU_DUNG`).
+  - `giaoDichDoiDiem`: `id` (mã phiếu hiển thị `PDT-00x`), `thoiGian`, `soDiemTru`, `diemConLai` (**ảnh chụp** số điểm còn lại tại thời điểm đổi, không đổi khi `tongDiem` biến động về sau), `khachHang` (`id`), `quaTang` (`id` → mã `PT0x`, `tenQua`, `loaiQua`, `soDiem`, `soLuong`, `moTa`, `giaTriGiam`).
+- **Hiển thị trên `GDChonQua.tsx`**: bảng `#tblLichSuDoiQua` nằm ngay trong màn hình đổi điểm hiện có (không thêm trang thứ 13); khi danh sách rỗng hiển thị rõ `"Chưa có lịch sử đổi quà."`; sau khi đổi quà thành công và quay về danh mục, lịch sử tải lại có ngay phiếu mới.
 
 ## 8. Seed data (mốc 27/09/2026, R12)
 
@@ -284,8 +297,10 @@ Mỗi cảnh chọn trạng thái mẫu của chính cảnh đó (có dữ liệ
 
 Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md`
 (`VeDAO.kiemTraVe`, `taoHoaDon(hd, dsVe)`, ghi phiếu trước voucher, tách 3.24 a/b/c).
-Checkout triển khai này không chứa `diagrams/puml/` hay ảnh `out/`; không sinh hoặc sửa ảnh thay cho
-nguồn gốc. Khi đồng bộ với repo phân tích, cần cập nhật nhánh mock thất bại ở R4: giữ hóa đơn chờ
+Nguồn sơ đồ đổi điểm ở `diagrams/puml/hinh-3-22-hoat-dong-doi-diem.puml` và
+`diagrams/puml/hinh-3-25-tuan-tu-doi-diem.puml` đã bổ sung lịch sử theo issue #13;
+ảnh SVG/PNG trong `diagrams/out/` được render từ nguồn, không sửa ảnh bằng tay.
+Khi đồng bộ với repo phân tích, cần cập nhật nhánh mock thất bại ở R4: giữ hóa đơn chờ
 thanh toán để thử lại trong hạn theo story 35 của issue #1.
 
 ## 11. Chạy & build
@@ -295,8 +310,8 @@ docker compose up --build        # mysql:3306, backend:8080, frontend:5173 (DB s
 # frontend: build ./frontend, node:24-alpine, API_PROXY_TARGET=http://backend:8080, depends_on backend
 #   → Vite dev server lắng nghe 0.0.0.0:5173, proxy /api sang backend nội bộ.
 # hoặc chạy tay (DB cineman, utf8mb4):
-mysql -u cineman -p cineman < backend/src/main/resources/schema.sql
-mysql -u cineman -p cineman < backend/src/main/resources/data.sql
+mysql --default-character-set=utf8mb4 -u cineman -p cineman < backend/src/main/resources/schema.sql
+mysql --default-character-set=utf8mb4 -u cineman -p cineman < backend/src/main/resources/data.sql
 cd backend && mvn spring-boot:run   # DB_URL / DB_USER / DB_PASSWORD ghi đè kết nối mặc định
 cd frontend && npm ci && npm run dev    # localhost:5173, /api → http://localhost:8080 (mặc định)
 cd backend && mvn test              # H2 chế độ MySQL, tự nạp schema.sql + data.sql
@@ -315,6 +330,14 @@ mvn -Dtest=M1IntegrationTest test
 Không trỏ lệnh này vào DB đang dùng: `spring.sql.init.mode=always` trong profile test nạp lại toàn bộ
 schema/seed. Kiểm thử qua REST/JDBC kiểm tra giữ ghế tranh chấp, voucher/điểm đúng một lần, và rollback
 cả hóa đơn/vé, phiếu/voucher, thanh toán/điểm khi một bước ghi bị lỗi.
+
+Issue #13: `M1IntegrationTest` kiểm tra lịch sử theo chủ phiên, trạng thái rỗng, thứ tự
+`thoiGian DESC, id DESC`, snapshot điểm sau thanh toán, và không thêm lịch sử khi đổi thất bại/rollback.
+Smoke trên seed: đăng nhập → Đổi điểm → thấy PDT-001/PT02/100/150/VC-VIDU-12345 →
+đổi PT02 → về danh mục thấy thêm đúng một phiếu mới → đặt SC03 ghế A3+B3, áp voucher seed,
+thanh toán 120.000đ và cộng 10 điểm → mở lại lịch sử: điểm hiện có 160, phiếu cũ vẫn 150,
+voucher seed đã dùng kèm ngày dùng. Khách đăng ký mới thấy “Chưa có lịch sử đổi quà.”
+
 
 UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
  Lightpanda không tạo ảnh render và không thay cho kiểm tra bằng mắt ở khổ hẹp.

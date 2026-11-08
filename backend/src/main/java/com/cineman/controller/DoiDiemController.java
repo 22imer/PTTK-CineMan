@@ -69,10 +69,12 @@ public class DoiDiemController {
     public record YeuCauDoiDiem(Integer quaTangId) {
     }
 
-    /** {@code {dsQuaTang, tongDiem}} — điểm là số dư mới nhất đọc từ DB. */
-    public record DanhSachQuaTang(List<QuaTang> dsQuaTang, int tongDiem) {
+    /** Danh mục, số dư và lịch sử của khách trong phiên, đọc cùng snapshot DB. */
+    public record DanhSachQuaTang(List<QuaTang> dsQuaTang, int tongDiem,
+                                  List<VoucherKhachHang> lichSuDoiQua) {
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/quatang")
     public ResponseEntity<ApiResponse<DanhSachQuaTang>> danhSachQuaTang(HttpServletRequest request) {
         Integer khachHangId = khachHangDangNhap(request);
@@ -84,7 +86,18 @@ public class DoiDiemController {
             return loi(HttpStatus.UNAUTHORIZED, THONG_BAO_CHUA_DANG_NHAP);
         }
         return ResponseEntity.ok(ApiResponse.ok(
-                new DanhSachQuaTang(quaTangDAO.laydsQuaTang(), khachHang.getTongDiem())));
+                new DanhSachQuaTang(quaTangDAO.laydsQuaTang(), khachHang.getTongDiem(),
+                        giaoDichDoiDiemDAO.layLichSuTheoKhachHang(khachHangId))));
+    }
+
+    @GetMapping("/doi-diem/lich-su")
+    public ResponseEntity<ApiResponse<List<VoucherKhachHang>>> lichSuDoiQua(HttpServletRequest request) {
+        Integer khachHangId = khachHangDangNhap(request);
+        if (khachHangId == null || khachHangDAO.layTheoId(khachHangId) == null) {
+            return loi(HttpStatus.UNAUTHORIZED, THONG_BAO_CHUA_DANG_NHAP);
+        }
+        return ResponseEntity.ok(ApiResponse.ok(
+                giaoDichDoiDiemDAO.layLichSuTheoKhachHang(khachHangId)));
     }
 
     /**

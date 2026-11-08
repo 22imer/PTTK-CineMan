@@ -116,6 +116,23 @@ function doiQuaTangUI(q: QuaTang): QuaTangUI {
   };
 }
 
+function doiDiemUI(vc: VoucherKhachHang, tenKhachHang: string): DoiDiemUI {
+  const gd = vc.giaoDichDoiDiem;
+  return {
+    maPhieu: maPhieuDoiDiem(gd.id),
+    khachHang: tenKhachHang,
+    thoiGian: dinhDangNgayGio(gd.thoiGian),
+    qua: doiQuaTangUI(gd.quaTang),
+    diemTruoc: gd.diemConLai + gd.soDiemTru,
+    diemTru: gd.soDiemTru,
+    diemSau: gd.diemConLai,
+    maVoucher: vc.maVoucher,
+    hanSuDung: hanVoucher(vc.ngayNhan),
+    trangThaiVoucher: vc.trangThai,
+    ngaySuDung: vc.ngaySuDung ? dinhDangNgay(vc.ngaySuDung) : null,
+  };
+}
+
 function useDemNguoc(han: string | undefined, serverNow: string | undefined): string {
   const [conLai, setConLai] = useState('05:00');
 
@@ -180,6 +197,7 @@ function TaiKhoanApp() {
 
   // State đổi điểm
   const [dsQuaTang, setDsQuaTang] = useState<QuaTang[]>([]);
+  const [lichSuDoiQua, setLichSuDoiQua] = useState<VoucherKhachHang[]>([]);
   const [ttQuaTang, setTtQuaTang] = useState<ViewState>('ready');
   const [loiQuaTang, setLoiQuaTang] = useState<string | undefined>();
   const [quaChon, setQuaChon] = useState<QuaTang | null>(null);
@@ -441,6 +459,7 @@ function TaiKhoanApp() {
     try {
       const duLieu = await HTTPClient.fetch<DanhSachQuaTang>('/api/quatang');
       setDsQuaTang(duLieu.dsQuaTang);
+      setLichSuDoiQua(duLieu.lichSuDoiQua);
       setKhachHang((kh) => (kh ? { ...kh, tongDiem: duLieu.tongDiem } : kh));
       setTtQuaTang(duLieu.dsQuaTang.length === 0 ? 'empty' : 'ready');
     } catch (err) {
@@ -654,6 +673,7 @@ function TaiKhoanApp() {
             khachHang={khachHang.hoTen}
             diem={khachHang.tongDiem}
             qua={dsQuaTang.map(doiQuaTangUI)}
+            lichSu={lichSuDoiQua.map((vc) => doiDiemUI(vc, khachHang.hoTen))}
             state={ttQuaTang}
             error={loiQuaTang}
             onChon={chonQua}
@@ -674,20 +694,7 @@ function TaiKhoanApp() {
       )}
       {manHinh === 'thong-bao' && voucherMoi && khachHang && (
         <GDThongBao
-          giaoDich={
-            {
-              maPhieu: maPhieuDoiDiem(voucherMoi.giaoDichDoiDiem.id),
-              khachHang: khachHang.hoTen,
-              thoiGian: dinhDangNgayGio(voucherMoi.giaoDichDoiDiem.thoiGian),
-              qua: doiQuaTangUI(voucherMoi.giaoDichDoiDiem.quaTang),
-              diemTruoc:
-                voucherMoi.giaoDichDoiDiem.diemConLai + voucherMoi.giaoDichDoiDiem.soDiemTru,
-              diemTru: voucherMoi.giaoDichDoiDiem.soDiemTru,
-              diemSau: voucherMoi.giaoDichDoiDiem.diemConLai,
-              maVoucher: voucherMoi.maVoucher,
-              hanSuDung: hanVoucher(voucherMoi.ngayNhan),
-            } satisfies DoiDiemUI
-          }
+          giaoDich={doiDiemUI(voucherMoi, khachHang.hoTen)}
           onVeDanhMuc={() => void moDoiDiem()}
         />
       )}
