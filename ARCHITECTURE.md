@@ -18,7 +18,7 @@ File này là shared understanding đã chốt (Q1–Q11) — implement đúng n
 | Q8 | **12 trang `*.tsx`** | `DangNhap` tách riêng; giữ thuộc tính `in/out/sub`; session ẩn `kh, phim, sc, hoaDon…` |
 | Q9 | Backend **Java Spring Boot** | Chữ ký DAO theo `_fix` (§5); mật khẩu băm BCrypt |
 | Q10 | Session mock + cổng thanh toán mock | `HttpSession`; cổng trả redirect mock; không thêm actor Cổng thanh toán |
-| Q11 | Diagrams `_fix` + seed + docker | `deploy/diagrams/` (3.24 tách a/b/c); seed mốc 27/09/2026; `docker-compose.yml` |
+| Q11 | Diagrams `_fix` + seed + docker | Tên/chữ ký theo bản _fix; seed mốc 27/09/2026; `docker-compose.yml` ở gốc repo |
 
 ## 2. Tổng quan
 
@@ -72,7 +72,7 @@ Ràng buộc trùng `(suất, ghế)`: không hai `Ve` `DANG_GIU`/`DA_BAN` cùng
 | R1 | Điểm = 1 điểm / 20.000đ tiền vé **trước** voucher (làm tròn xuống); 210.000đ → +10; chỉ cộng khi thanh toán thành công |
 | R2 | Voucher hợp lệ: đúng chủ đăng nhập, `CHUA_SU_DUNG`, còn hạn 30 ngày, tối đa 1/hóa đơn, giảm ≤ tổng tiền. Áp chỉ kiểm tra; `DA_SU_DUNG` khi thanh toán thành công; kiểm tra lại lúc ghi nhận |
 | R3 | `VoucherGiamGia.giaTriGiam` trừ cố định; `VoucherVeTang` (PT02) miễn 1 vé rẻ nhất, chỉ suất 2D (VD `VC-VIDU-12345` miễn A3 90.000đ → trả 120.000đ); `VoucherVatPham` bắp nước nhận tại quầy, không áp hóa đơn |
-| R4 | Hóa đơn (`CHO_THANH_TOAN`) + vé (`DANG_GIU`) tạo khi bấm **Tiếp tục** ở chọn ghế; thanh toán thành công → `DA_THANH_TOAN` + vé `DA_BAN`; thất bại → `THAT_BAI`, Quay lại → `DA_HUY`, quá hạn → `HET_HAN`, vé đều `DA_HUY`; không có `PhienDatVe`/`GiuCho` |
+| R4 | Hóa đơn (`CHO_THANH_TOAN`) + vé (`DANG_GIU`) tạo khi bấm **Tiếp tục** ở chọn ghế; thanh toán thành công → `DA_THANH_TOAN` + vé `DA_BAN`; mock thất bại giữ `CHO_THANH_TOAN` để thử lại trong hạn (issue #1, story 35), Quay lại → `DA_HUY`, quá hạn → `HET_HAN`, vé hủy/qua hạn → `DA_HUY`; không có `PhienDatVe`/`GiuCho` |
 | R5 | Giữ ghế 300 giây từ lúc tạo hóa đơn; hạn `hetHan` do server lưu, FE chỉ hiển thị; không gia hạn |
 | R6 | Ghế đôi Sweetbox = 2 `Ghe` liền kề cùng loại, mỗi ghế 1 `Ve`; chọn theo cặp ở lớp điều khiển |
 | R7 | Tối đa 8 ghế/hóa đơn: `HoaDon 1 — 1..8 Ve` |
@@ -93,15 +93,22 @@ Controller là Spring `@RestController` (3 controller nghiệp vụ). Frontend k
 | DAO | Phương thức (chữ ký đầy đủ) |
 | :--- | :--- |
 | `ThanhVienDAO` | `kiemTraThongTin(kh : KhachHang) : boolean`, `kiemTraEmailSDT(email : String, sdt : String) : boolean`, `kiemTraDangNhap(ThanhVien tv) : boolean` |
-| `KhachHangDAO` | `taoHoSo(kh : KhachHang) : boolean`, `kiemTraDiem(maKhachHang : String, diem : int) : boolean`, `truDiem(...)`, `congDiem(maKhachHang : String, diem : int) : boolean` |
+| `KhachHangDAO` | `taoHoSo(kh : KhachHang) : boolean`, `kiemTraDiem(maKhachHang : String, diem : int) : boolean`, `truDiem(maKhachHang : String, diem : int) : boolean`, `congDiem(maKhachHang : String, diem : int) : boolean`, `layTheoId(id : int) : KhachHang`, `khoaTheoId(id : int) : KhachHang` (đọc/khóa hồ sơ không mật khẩu) |
 | `PhimDAO` / `KhungGioDAO` | `laydsPhim() : List<Phim>`, `laydsKhungGio() : List<KhungGio>` |
-| `SuatChieuDAO` | `laydsSuatChieu(idPhim : int, ngayChieu : Date, idKhungGio : int) : List<SuatChieu>` |
+| `SuatChieuDAO` | `laydsSuatChieu(idPhim : int, ngayChieu : Date, idKhungGio : int) : List<SuatChieu>`, `layTheoId(id : int) : SuatChieu`, `khoaTheoId(id : int) : SuatChieu` |
 | `GheDAO` | `laydsGhe(idSuatChieu : int) : List<Ghe>` |
 | `VeDAO` | `laydsVeConHieuLuc(suatChieu) : List<Ve>`, `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`, `tinhTienVe(suatChieu : SuatChieu, ghe : Ghe) : Ve` (= `giaCoSo + phuThu`, tạo đối tượng `Ve`), `capNhatTrangThaiVe(idHoaDon : int, trangThai : String) : boolean`, `huyVe(idVe : int)` |
 | `HoaDonDAO` | `taoHoaDon(hd : HoaDon, dsVe : List<Ve>) : HoaDon` (1 giao dịch: kiểm tra `(suất,ghế)` + lưu HoaDon + Ve), `tinhTongTien(dsVe : List<Ve>) : int`, `tinhTongTien(dsVe, voucher) : int` (1 hàm, voucher optional — **bỏ** `capNhatTongTien`), `kiemTraHetHan(idHoaDon : int)`, `xacNhanThanhToan(idHoaDon : int)`, `huyHoaDon(idHoaDon : int)` — **bỏ** `timHoaDonTheoIdVe`, bỏ `phatHanhVe` (vé tạo cùng hóa đơn) |
-| `VoucherKhachHangDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`, `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean`, `luuVoucher(vc : VoucherKhachHang) : id` — **bỏ** `taoVoucher()` không tham số |
+| `VoucherKhachHangDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`, `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean`, `luuVoucher(vc : VoucherKhachHang) : int`, `layTheoId(id : int) : VoucherKhachHang`, `khoaTheoId(id : int) : VoucherKhachHang` — **bỏ** `taoVoucher()` không tham số |
 | `GiaoDichDoiDiemDAO` | `luuGiaoDich(gd : GiaoDichDoiDiem) : int` |
-| `QuaTangDAO` | `laydsQuaTang() : List<QuaTang>`, `kiemTraSoLuong(idQua : int) : boolean`, `capNhatSoLuong(idQua : int, soLuong : int) : boolean` |
+| `QuaTangDAO` | `laydsQuaTang() : List<QuaTang>`, `kiemTraSoLuong(idQua : int) : boolean`, `capNhatSoLuong(idQua : int, soLuong : int) : boolean`, `khoaQuaTang(idQua : int) : QuaTang` |
+
+`maKhachHang` trong DAO điểm là id nội bộ dạng chuỗi số; các phép cộng/trừ từ chối số âm.
+
+Thử lại nút Quay lại trên hóa đơn đã thanh toán là thao tác không thay đổi: backend trả tóm tắt
+`DA_THANH_TOAN`, giao diện chuyển tới trang xác nhận để khách không mất vé.
+`QuaTangDAO.khoaQuaTang(id)` đọc tồn kho bằng khóa ghi; giao dịch đổi điểm kiểm tra trực tiếp số dư và
+tồn kho từ các hàng vừa khóa, tránh đọc lại snapshot cũ khi có yêu cầu tranh chấp.
 
 **Giao dịch nguyên tử (bắt buộc):**
 
@@ -118,14 +125,9 @@ GDKhachHangHome → GDChonPhim → GDKhungGio → GDSuatChieu → GDChonGhe → 
 GDKhachHangHome → GDChonQua → GDXacNhanDoiQua → GDThongBao   (đổi điểm)
 ```
 
-Đăng nhập/đăng ký vẫn gọi `POST /api/auth/login` và `POST /api/auth/register`.
-Các màn còn lại là view có trạng thái được kiểm soát (`frontend/src/ui/models.ts`):
- chúng nhận dữ liệu hiển thị và callback, không tự gọi API. Mẫu UI (`?ui=VE-02`, …) chỉ
- cung cấp dữ liệu minh họa và cho biết dữ liệu không thay đổi; nút trên bản mẫu không
- tạo hóa đơn, giữ ghế, thanh toán hay đổi điểm. Vé được gắn mã QR mẫu ở
- `frontend/public/ticket-demo.svg`; mã chứa văn bản demo, không phải vé có thể đổi.
-Bản xem chỉ dùng cho duyệt trình bày cho tới khi controller điều phối dữ liệu và
- callback thật.
+Issue #1 triển khai đủ 12 trang nối với REST API thật qua `App.tsx` và `HTTPClient.fetch()`.
+Các màn `GD*.tsx` nhận dữ liệu hiển thị (`frontend/src/ui/models.ts`) và callback từ tầng điều phối;
+ngoài luồng thật ở `/`, chế độ `?ui=VE-02`… (`Preview.tsx`) vẫn giữ để duyệt nhanh 14 wireframe tĩnh.
 
 | Trang | Vai trò cốt lõi |
 | :--- | :--- |
@@ -148,7 +150,7 @@ Session ẩn: `kh`, `phim`, `ngayChieu`, `khungGio`, `sc`, `hoaDon`, `qt`, `vc`.
 
 `HTTPClient.fetch()` ↔ 3 `@RestController`. Đáp ứng JSON `{ success: boolean, data?: T, message?: string }`;
 lỗi trả `{ success: false, message }` — không stacktrace, không password/hash.
-Bước 2 mới mở nhóm Auth (`DangKyController`); các nhóm sau là hợp đồng cho bước đặt vé/đổi điểm.
+Ba nhóm API dùng cùng envelope và phiên server; không tin id khách hàng, giá vé, điểm hay hạn giữ ghế do client gửi.
 
 | Nhóm | Method & path | Vào | Ra |
 | :--- | :--- | :--- | :--- |
@@ -156,14 +158,22 @@ Bước 2 mới mở nhóm Auth (`DangKyController`); các nhóm sau là hợp �
 | | `POST /api/auth/login` | `{ "username": "…", "password": "…" }` | HTTP 200 `{ success: true, data: KhachHang }` + `HttpSession.khachHangId` |
 | Booking (`DatVeController`) | `GET /api/phim` | — | `List<Phim>` |
 | | `GET /api/khunggio?phimId=&ngayChieu=` | phim, ngày | `List<KhungGio>` |
-| | `GET /api/suatchieu?phimId=&ngayChieu=&khungGioId=` | — | `List<SuatChieu>` |
-| | `GET /api/ghe?suatChieuId=` | — | `List<Ghe>` + `List<Ve>` (sơ đồ ghế + trạng thái) |
-| | `POST /api/hoadon` | `khachHang`, `suatChieu`, `dsGhe` | `HoaDon` (`taoHoaDon(hd, dsVe)`) |
-| | `POST /api/hoadon/apdung-voucher` | `hoaDonId`, `maVoucher` | tổng tiền sau giảm (`tinhTongTien(dsVe, voucher)`) |
-| | `POST /api/hoadon/{id}/thanh-toan` | — | `DA_THANH_TOAN` + vé `DA_BAN` + điểm cộng |
-| | `DELETE /api/hoadon/{id}` | — | `huyHoaDon` + nhả ghế |
-| Reward (`DoiDiemController`) | `GET /api/quatang` | — | `List<QuaTang>` + điểm hiện có |
-| | `POST /api/doi-diem` | `khachHangId`, `quaTangId` | `VoucherKhachHang` (qua `thucHienDoiDiem`) |
+| | `GET /api/suatchieu?phimId=&ngayChieu=&khungGioId=` | ngày/khung giờ optional để liệt kê ngày mở bán | `List<SuatChieu>` |
+| | `GET /api/ghe?suatChieuId=` | — | `{dsGhe, dsVe, suatChieu}`; nhả giữ ghế hết hạn trước khi đọc |
+| | `POST /api/hoadon` | `{suatChieuId, dsGhe: number[]}` | tóm tắt hóa đơn (`taoHoaDon(hd, dsVe)`) |
+| | `POST /api/hoadon/apdung-voucher` | `{hoaDonId, maVoucher}` | tóm tắt sau giảm, voucher chưa tiêu |
+| | `POST /api/hoadon/{id}/thanh-toan` | `{thanhCong?: boolean}` (mock, mặc định true) | tóm tắt đã thanh toán; false cho thử lại trong hạn |
+| | `DELETE /api/hoadon/{id}` | — | tóm tắt hủy + nhả ghế; không hủy hóa đơn đã thanh toán |
+| Reward (`DoiDiemController`) | `GET /api/quatang` | — | `{dsQuaTang: List<QuaTang>, tongDiem}` |
+| | `POST /api/doi-diem` | `{quaTangId}` | `VoucherKhachHang` kèm phiếu `giaoDichDoiDiem` |
+
+Tóm tắt hóa đơn: `{hoaDon, tongTienTruocVoucher, tongTien, diemCong, tongDiem, serverNow}`.
+`hoaDon.dsVe` có ghế/suất chiếu; tiền và điểm tính server, không thêm cột dẫn xuất. Đồng hồ dùng
+`hetHan - serverNow` và thời gian trôi để hiển thị, không gửi quyết định hết hạn từ trình duyệt.
+Khóa hàng suất chiếu trước kiểm tra trùng ghế; khóa hóa đơn/voucher khi thanh toán; khóa khách/quà
+khi đổi điểm. Xác nhận thanh toán lặp không cộng điểm/tiêu voucher lần nữa. Hết hạn phải được commit
+`HET_HAN`/vé `DA_HUY` dù API trả lỗi. Voucher được kiểm tra lại lúc ghi nhận, không áp bắp nước vào vé.
+Mã voucher mới sinh duy nhất; `VC-VIDU-12345` chỉ là seed, không cấp trùng cho lần đổi mới.
 
 ### 7.1. Hợp đồng đăng ký/đăng nhập (bước 2)
 
@@ -224,13 +234,13 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 | Phụ thu Sweetbox | 50.000đ |
 | `PDT-001` + `VC-VIDU-12345` | `thoiGian`/`ngayNhan` = thời điểm nạp seed để voucher còn hạn 30 ngày (mốc 25/09/2026 đã quá hạn); `tongDiem` vẫn 250 để chạy kịch bản đổi điểm |
 
-## 9. Cấu trúc thư mục `deploy/`
+## 9. Cấu trúc thư mục (gốc repo, không thêm `deploy/`)
 
 ```text
-deploy/
+.
 ├── ARCHITECTURE.md
 ├── AGENTS.md
-├── diagrams/                     # bản _fix đã sửa (xem §10)
+├── GLOSSARY.md                   # thuật ngữ nghiệp vụ chuẩn (issue #1)
 ├── docker-compose.yml            # mysql + backend + frontend
 ├── frontend/                     # Vite + React + TS, dev server cổng 5173
 │   ├── Dockerfile                # node:24-alpine, npm ci, npm run dev
@@ -242,7 +252,7 @@ deploy/
 │   └── src/
 │       ├── main.tsx              # mount React
 │       ├── App.tsx               # điều hướng theo React state (mục 6)
-│       ├── types.ts              # type KhachHang dùng chung
+│       ├── types.ts              # kiểu hồ sơ, đặt vé và đổi điểm dùng chung
 │       ├── styles.css
 │       ├── ui/                   # primitives, data model cho view và preview mẫu
 │       ├── api/httpClient.ts     # HTTPClient.fetch()
@@ -272,9 +282,11 @@ Mỗi cảnh chọn trạng thái mẫu của chính cảnh đó (có dữ liệ
 
 ## 10. Diagrams
 
-Nguồn PlantUML ở `diagrams/puml/`. Bản nộp dùng **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md`
-(chữ ký đầu vào/đầu ra, `VeDAO.kiemTraVe`, `taoHoaDon(hd, dsVe)`, ghi phiếu trước voucher, tách 3.24 a/b/c).
-Deploy copy ở `deploy/diagrams/` (`puml/` + `out/`): xem `diagrams/README.md` trong deploy.
+Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md`
+(`VeDAO.kiemTraVe`, `taoHoaDon(hd, dsVe)`, ghi phiếu trước voucher, tách 3.24 a/b/c).
+Checkout triển khai này không chứa `diagrams/puml/` hay ảnh `out/`; không sinh hoặc sửa ảnh thay cho
+nguồn gốc. Khi đồng bộ với repo phân tích, cần cập nhật nhánh mock thất bại ở R4: giữ hóa đơn chờ
+thanh toán để thử lại trong hạn theo story 35 của issue #1.
 
 ## 11. Chạy & build
 
@@ -290,6 +302,19 @@ cd frontend && npm ci && npm run dev    # localhost:5173, /api → http://localh
 cd backend && mvn test              # H2 chế độ MySQL, tự nạp schema.sql + data.sql
 cd frontend && npm run build        # tsc --noEmit && vite build → dist/
 ```
+
+Kiểm thử M1 có thể chạy lại trên **DB MySQL riêng, được phép xóa schema/seed**:
+
+```bash
+cd backend
+M1_TEST_DB_URL='jdbc:mysql://127.0.0.1:3306/cineman_test' \
+M1_TEST_DB_USER=cineman M1_TEST_DB_PASSWORD=cineman \
+mvn -Dtest=M1IntegrationTest test
+```
+
+Không trỏ lệnh này vào DB đang dùng: `spring.sql.init.mode=always` trong profile test nạp lại toàn bộ
+schema/seed. Kiểm thử qua REST/JDBC kiểm tra giữ ghế tranh chấp, voucher/điểm đúng một lần, và rollback
+cả hóa đơn/vé, phiếu/voucher, thanh toán/điểm khi một bước ghi bị lỗi.
 
 UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
  Lightpanda không tạo ảnh render và không thay cho kiểm tra bằng mắt ở khổ hẹp.
