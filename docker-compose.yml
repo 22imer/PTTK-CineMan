@@ -1,0 +1,57 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: cineman
+      MYSQL_USER: cineman
+      MYSQL_PASSWORD: cineman
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    # Nạp schema + seed khi khởi tạo DB lần đầu.
+    # Không dùng named volume: down rồi up = DB seed mới.
+    volumes:
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      # Ping qua TCP: lúc chạy init script server chỉ nghe socket,
+      # nên không báo healthy sớm.
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - 127.0.0.1
+        - -ucineman
+        - -pcineman
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: >-
+        jdbc:mysql://mysql:3306/cineman?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=SERVER
+      DB_USER: cineman
+      DB_PASSWORD: cineman
+      TZ: Asia/Ho_Chi_Minh
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    environment:
+      # Vite proxy /api → backend trong mạng compose (vite.config.ts).
+      API_PROXY_TARGET: http://backend:8080
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
