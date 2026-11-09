@@ -102,11 +102,18 @@ Tạo database `cineman` dùng `utf8mb4` và tài khoản `cineman` có quyền 
 **Cảnh báo: `schema.sql` xóa rồi tạo lại các bảng. Chỉ chạy trên database phát triển được phép mất dữ liệu.** Từ gốc repo:
 
 ```bash
-mysql -h 127.0.0.1 -u cineman -p cineman < backend/src/main/resources/schema.sql
-mysql -h 127.0.0.1 -u cineman -p cineman < backend/src/main/resources/data.sql
+mysql --default-character-set=utf8mb4 -h 127.0.0.1 -u cineman -p cineman < backend/src/main/resources/schema.sql
+mysql --default-character-set=utf8mb4 -h 127.0.0.1 -u cineman -p cineman < backend/src/main/resources/data.sql
 ```
 
 Backend không tự nạp schema/seed khi chạy bình thường (`spring.sql.init.mode=never`).
+
+**Unicode (#27):** giữ file SQL ở UTF-8. `data.sql` đặt `SET NAMES utf8mb4` trước các lệnh INSERT để
+byte UTF-8 không bị MySQL đọc nhầm theo charset mặc định của client (ví dụ `latin1`).
+Charset của server/database và JDBC không sửa được dữ liệu đã nhập sai.
+Nếu đã thấy `Nguyá»…n VÄƒn A`, hãy sao lưu trước: chỉ nạp lại schema/seed trên DB phát triển được phép
+xóa dữ liệu. Với DB cần giữ tài khoản/giao dịch, khôi phục các trường chữ bị hỏng từ bản UTF-8 đúng;
+không chạy lại `schema.sql`, không đổi font hay giải mã lại toàn bộ phản hồi ở frontend.
 
 ### 2. Chạy backend
 
