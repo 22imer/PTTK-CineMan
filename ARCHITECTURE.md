@@ -338,6 +338,13 @@ Smoke trên seed: đăng nhập → Đổi điểm → thấy PDT-001/PT02/100/1
 thanh toán 120.000đ và cộng 10 điểm → mở lại lịch sử: điểm hiện có 160, phiếu cũ vẫn 150,
 voucher seed đã dùng kèm ngày dùng. Khách đăng ký mới thấy “Chưa có lịch sử đổi quà.”
 
+Issue #27: chuỗi tiếng Việt đi nguyên dạng UTF-8 từ seed → MySQL `utf8mb4` → JDBC → JSON → DOM.
+`data.sql` đặt `SET NAMES utf8mb4` trước INSERT: charset của server không thay thế charset phiên import.
+Kiểm chứng trên MySQL 8.4: import cùng file UTF-8 bằng client `latin1` và `utf8mb4`, đọc lại qua kết nối
+`utf8mb4`; tên khách, địa chỉ, phim, quà, loại ghế và phòng phải giữ nguyên dấu tiếng Việt.
+Không giải mã bù ở frontend. DB đã nhập sai cần khôi phục dữ liệu chữ từ nguồn UTF-8 đúng; chỉ nạp lại
+schema/seed khi đó là DB phát triển được phép xóa dữ liệu (xem README).
+
 
 UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
  Lightpanda không tạo ảnh render và không thay cho kiểm tra bằng mắt ở khổ hẹp.

@@ -1,6 +1,9 @@
 -- CineMan M1 — seed theo ARCHITECTURE.md §8 (mốc 27/09/2026, R12). Chạy ngay sau schema.sql (bảng rỗng).
 -- Không ghi id: AUTO_INCREMENT cấp 1..n theo thứ tự INSERT; chú thích ghi id + mã hiển thị để đối chiếu.
 
+-- File UTF-8: cố định charset phiên import, không phụ thuộc locale/cấu hình mysql client.
+SET NAMES utf8mb4;
+
 -- id 1 — Nguyễn Văn A, đăng nhập annguyen2002 / Matkhau@123 (BCrypt)
 INSERT INTO tblThanhVien (username, password, hoTen, ngaySinh, gioiTinh, diaChi, email, sdt, vaiTro) VALUES
     ('annguyen2002', '$2a$10$IWSpxMat9ys9tW9nZIQijeO0jmdAA0Jj9oIXHnIoadQGXuoYRM4BW', 'Nguyễn Văn A', '2002-08-15', 'Nam',
