@@ -342,8 +342,13 @@ Issue #27: chuỗi tiếng Việt đi nguyên dạng UTF-8 từ seed → MySQL `
 `data.sql` đặt `SET NAMES utf8mb4` trước INSERT: charset của server không thay thế charset phiên import.
 Kiểm chứng trên MySQL 8.4: import cùng file UTF-8 bằng client `latin1` và `utf8mb4`, đọc lại qua kết nối
 `utf8mb4`; tên khách, địa chỉ, phim, quà, loại ghế và phòng phải giữ nguyên dấu tiếng Việt.
-Không giải mã bù ở frontend. DB đã nhập sai cần khôi phục dữ liệu chữ từ nguồn UTF-8 đúng; chỉ nạp lại
-schema/seed khi đó là DB phát triển được phép xóa dữ liệu (xem README).
+Không giải mã bù ở frontend. `backend/src/main/resources/repair-unicode.sql` sửa record seed cũ trong
+một transaction: chỉ thay từng trường có ID và giá trị byte khớp chính xác seed bị import qua Latin-1.
+Chữ đã đúng/chỉnh sửa riêng, NULL, ID, mật khẩu, điểm, tồn kho và giao dịch không đổi; chạy lại là no-op.
+Sao lưu trước, chạy thủ công trên DB đang dùng (xem README); không nạp lại `schema.sql`/`data.sql`.
+Script này không khôi phục dữ liệu nhập riêng hoặc dạng lỗi khác bằng cách đoán nội dung.
+`UnicodeRepairIntegrationTest` chỉ bật với `UNICODE_TEST_DB_URL` trỏ tới MySQL riêng được phép xóa
+schema/seed; kiểm chứng bảo toàn mọi cột/record của 13 bảng và tính idempotent của bản sửa.
 
 
 UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
