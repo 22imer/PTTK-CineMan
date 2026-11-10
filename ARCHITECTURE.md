@@ -14,10 +14,10 @@ File này là shared understanding đã chốt (Q1–Q11) — implement đúng n
 | Q3 | **Thêm `GiaoDichDoiDiem`** (phiếu PDT-001) | `VoucherKhachHang` chứa `giaoDichDoiDiem`; bỏ `khachHang/quaTang` trên voucher; **ghi phiếu trước → tạo voucher sau**, 1 transaction `thucHienDoiDiem` |
 | Q4 | Giữ **3 lớp con `QuaTang`** | 1 bảng `tblQuaTang` chứa `loaiQua` + `giaTriGiam` (NULL với vé/bắp nước); 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` vẫn bắt buộc |
 | Q5–Q6 | Chốt **R1–R12** | Xem §4; không còn mục "chưa chốt" |
-| Q7 | Schema **13 bảng**, **14 khóa ngoại** | `tblXId` cho khóa ngoại; kiểm tra trùng `(suatChieu,ghe)` ở app-level |
+| Q7 | **13 bảng nghiệp vụ + 1 bảng phiên**, **15 khóa ngoại** | Thêm `tblPhienDangNhap` theo thiết kế JWT được xác nhận 09/11/2026; giữ `tblXId` và kiểm tra trùng ghế ở app-level |
 | Q8 | **12 trang `*.tsx`** | `DangNhap` tách riêng; giữ thuộc tính `in/out/sub`; session ẩn `kh, phim, sc, hoaDon…` |
 | Q9 | Backend **Java Spring Boot** | Chữ ký DAO theo `_fix` (§5); mật khẩu băm BCrypt |
-| Q10 | Session mock + cổng thanh toán mock | `HttpSession`; cổng trả redirect mock; không thêm actor Cổng thanh toán |
+| Q10 | **Phiên JWT có trạng thái thu hồi + cổng thanh toán mock** | Access Bearer 15 phút, refresh/phiên tối đa 7 ngày; bỏ `HttpSession`; cổng thanh toán vẫn mock |
 | Q11 | Diagrams `_fix` + seed + docker | Tên/chữ ký theo bản _fix; seed mốc 27/09/2026; `docker-compose.yml` ở gốc repo |
 
 ## 2. Tổng quan
@@ -31,9 +31,9 @@ Browser (React TSX) ── fetch (HTTPClient) ──▶ Spring REST ──▶ DA
 | :--- | :--- | :--- |
 | Frontend | TypeScript + React + Vite | 12 trang `GD*.tsx` (§6), gọi API qua `HTTPClient.fetch()` |
 | Backend | Java Spring Boot (REST) | 3 controller nghiệp vụ → DAO |
-| Database | MySQL | 13 bảng `tbl*` (§3), 14 khóa ngoại `tblXId` |
+| Database | MySQL | 13 bảng nghiệp vụ + `tblPhienDangNhap` kỹ thuật, tổng 14 bảng / 15 khóa ngoại |
 
-## 3. Mô hình dữ liệu (MySQL, 13 bảng, 14 khóa ngoại)
+## 3. Mô hình dữ liệu (MySQL, 14 bảng, 15 khóa ngoại)
 
 | Bảng | Cột (không khóa ngoại) | Ghi chú |
 | :--- | :--- | :--- |
@@ -50,12 +50,13 @@ Browser (React TSX) ── fetch (HTTPClient) ──▶ Spring REST ──▶ DA
 | `tblQuaTang` | `id, tenQua, loaiQua, soDiem, soLuong, giaTriGiam, moTa` | `loaiQua ∈ {GIAM_GIA, VE_PHIM, BAP_NUOC}`; `giaTriGiam` chỉ dùng cho quà `GIAM_GIA` (> 0), NULL với vé/bắp nước; 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` vẫn giữ, phân biệt bằng `loaiQua` |
 | `tblGiaoDichDoiDiem` | `id, thoiGian, soDiemTru, diemConLai, tblKhachHangId, tblQuaTangId` | Phiếu PDT-001; **chỉ lưu phiếu thành công**; không có `trangThai` |
 | `tblVoucherKhachHang` | `id, maVoucher, ngayNhan, ngaySuDung, trangThai, tblGiaoDichDoiDiemId` | UNIQUE `maVoucher`; `trangThai ∈ {CHUA_SU_DUNG, DA_SU_DUNG}`; hạn = `ngayNhan + 30 ngày` (**không lưu cột**); chủ/quà qua `giaoDichDoiDiem` |
-| | | 13 bảng = 12 bảng bc + `tblGiaoDichDoiDiem` (lịch sử phiếu đổi quà, canonical) |
+| `tblPhienDangNhap` | `id` (UUID), `refreshTokenHash`, `previousTokenHash` (nullable), `xoayLuc` (nullable), `ngayTao`, `hetHan`, `thuHoiLuc` (nullable), `tblKhachHangId` (FK) | Bảng kỹ thuật xác thực: POJO `PhienDangNhap`, chỉ hash refresh token; khóa hàng khi xoay/thu hồi; không chứa trạng thái đặt vé |
+| | | 13 bảng nghiệp vụ = 12 bảng bc + `tblGiaoDichDoiDiem`; bảng phiên kỹ thuật nằm ngoài mô hình nghiệp vụ M1 |
 
 > Quyết định 08/11/2026 ([issue #3](https://github.com/22imer/PTTK-CineMan/issues/3)): lịch sử đổi quà dùng
 > `tblGiaoDichDoiDiem` hiện có — không thêm bảng lịch sử trùng lặp; `giaTriGiam` nằm chung `tblQuaTang`,
 > bỏ bảng tách `tblVoucherGiamGia` (bảng này từng được thêm chỉ để ép đủ "14 bảng" — con số đếm sai).
-> 3 lớp con `QuaTang` vẫn bắt buộc; schema đúng là 13 bảng / 14 khóa ngoại. Bước 2 không đổi API hay lịch sử.
+> 3 lớp con `QuaTang` vẫn bắt buộc. Từ 09/11/2026 giữ nguyên 13 bảng nghiệp vụ / 14 khóa ngoại và thêm đúng một bảng phiên kỹ thuật / một khóa ngoại, tổng 14 bảng / 15 khóa ngoại.
 
 Quy ước kiểu (thiết kế): tiền/điểm/số lượng = `int`; chuỗi/loại/trạng thái = `String`; ngày/giờ = `Date`
 (CSDL tách `DATE`/`DATETIME`/`TIME`; Java dùng `LocalDate`/`LocalDateTime`/`LocalTime` tương ứng); tên khóa ngoại `tblXId` (`tbl` + tên bảng camelCase + `Id`).
@@ -102,6 +103,7 @@ Controller là Spring `@RestController` (3 controller nghiệp vụ). Frontend k
 | `VoucherKhachHangDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`, `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean`, `luuVoucher(vc : VoucherKhachHang) : int`, `layTheoId(id : int) : VoucherKhachHang`, `khoaTheoId(id : int) : VoucherKhachHang` — **bỏ** `taoVoucher()` không tham số |
 | `GiaoDichDoiDiemDAO` | `luuGiaoDich(gd : GiaoDichDoiDiem) : int`, `layLichSuTheoKhachHang(idKhachHang : int) : List<VoucherKhachHang>` |
 | `QuaTangDAO` | `laydsQuaTang() : List<QuaTang>`, `kiemTraSoLuong(idQua : int) : boolean`, `capNhatSoLuong(idQua : int, soLuong : int) : boolean`, `khoaQuaTang(idQua : int) : QuaTang` |
+| `PhienDangNhapDAO` | `taoPhien(id : String, khachHangId : int, refreshTokenHash : String, ngayTao : Instant, hetHan : Instant) : void`, `layTheoId(id : String) : PhienDangNhap`, `khoaTheoId(id : String) : PhienDangNhap`, `xoayToken(id : String, hashCu : String, hashMoi : String, xoayLuc : Instant) : boolean`, `thuHoi(id : String, thuHoiLuc : Instant) : boolean` — JdbcTemplate, giao dịch ở tầng xác thực, không đổi DAO nghiệp vụ |
 
 `maKhachHang` trong DAO điểm là id nội bộ dạng chuỗi số; các phép cộng/trừ từ chối số âm.
 
@@ -148,14 +150,14 @@ Session ẩn: `kh`, `phim`, `ngayChieu`, `khungGio`, `sc`, `hoaDon`, `qt`, `vc`.
 
 ## 7. REST API
 
-`HTTPClient.fetch()` ↔ 3 `@RestController`. Đáp ứng JSON `{ success: boolean, data?: T, message?: string }`;
-lỗi trả `{ success: false, message }` — không stacktrace, không password/hash.
+`HTTPClient.fetch()` ↔ 3 `@RestController`. Đáp ứng JSON `{ success: boolean, data?: T, message?: string, code?: string }`;
+lỗi trả `{ success: false, message, code? }` — không stacktrace, không password/hash.
 Ba nhóm API dùng cùng envelope và phiên server; không tin id khách hàng, giá vé, điểm hay hạn giữ ghế do client gửi.
 
 | Nhóm | Method & path | Vào | Ra |
 | :--- | :--- | :--- | :--- |
 | Auth (`DangKyController`) | `POST /api/auth/register` | `{ "kh": {…}, "xacNhanMatKhau": "…" }` | HTTP 200 `{ success: true, data: KhachHang, message }` |
-| | `POST /api/auth/login` | `{ "username": "…", "password": "…" }` | HTTP 200 `{ success: true, data: KhachHang }` + `HttpSession.khachHangId` |
+| | `POST /api/auth/login` | `{ "username": "…", "password": "…" }` | `ThongTinDangNhap` (§7.3) + cookie refresh; không tạo `JSESSIONID` |
 | Booking (`DatVeController`) | `GET /api/phim` | — | `List<Phim>` |
 | | `GET /api/khunggio?phimId=&ngayChieu=` | phim, ngày | `List<KhungGio>` |
 | | `GET /api/suatchieu?phimId=&ngayChieu=&khungGioId=` | ngày/khung giờ optional để liệt kê ngày mở bán | `List<SuatChieu>` |
@@ -206,28 +208,72 @@ Mã voucher mới sinh duy nhất; `VC-VIDU-12345` chỉ là seed, không cấp 
 `POST /api/auth/login`:
 
 - Body `{ "username": "annguyen2002", "password": "Matkhau@123" }`. Server bỏ qua `id`/`vaiTro`/`tongDiem` client gửi.
-- 200: `{ success: true, data: KhachHang }` với hồ sơ **đọc từ server**; ghi `khachHangId` vào `HttpSession`
-  (đổi id phiên khi đăng nhập thành công để chống session fixation) và trả cookie phiên.
-- 401: sai thông tin — envelope `{ success: false, message }`, không tạo phiên.
+- 200: `{ success: true, data: ThongTinDangNhap }` với hồ sơ **đọc từ server**, access JWT và cookie refresh (§7.3).
+- 401: sai thông tin — envelope `{ success: false, message }`, không tạo/thu hồi phiên đang hợp lệ.
 
-**Phiên & hiển thị:** backend là nguồn sự thật của phiên (`HttpSession.khachHangId`). `HTTPClient.fetch` đặt
-`credentials: 'include'` và luôn gọi path tương đối `/api/...`, nên qua proxy Vite cùng origin cookie phiên
-(`JSESSIONID`) đi kèm mọi request; `KhachHang` chỉ nằm trong **React state** để hiển thị. Không lưu mật khẩu hay
-object hồ sơ vào `localStorage`/`sessionStorage`; reload trang quay lại `DangNhap` (state mất) dù phiên phía
-server còn hiệu lực. `HTTPClient.fetch<T>(path, init?)` trả `data` và `throw new Error(message)`
-(kể cả lỗi mạng) cho UI hiển thị.
+**Phiên & hiển thị:** JWT thay hoàn toàn `HttpSession`; danh tính đã xác thực được truyền nội bộ đến
+controller sau bước kiểm tra Bearer và phiên DB. `HTTPClient.fetch` gọi `/api/...`, giữ
+`credentials: 'include'` cho refresh cookie và thêm Bearer cho API được bảo vệ.
+Không lưu token/hồ sơ vào `localStorage`/`sessionStorage`. Reload khôi phục đăng nhập, không khôi phục
+tiến trình đặt vé. `HTTPClient.fetch<T>(path, init?)` vẫn trả `data` hoặc ném `HTTPError`.
 
 ### 7.2. Hợp đồng đọc lịch sử đổi quà (issue #13)
 
 - **Đường dẫn (nhóm Reward — `DoiDiemController`)**:
   - `GET /api/doi-diem/lich-su` → `{ success: true, data: List<VoucherKhachHang> }`.
   - `GET /api/quatang` trả kèm `lichSuDoiQua: List<VoucherKhachHang>` cùng `{ dsQuaTang, tongDiem }` để màn `GDChonQua` tải danh mục + số dư + lịch sử đồng bộ trong một lượt.
-- **Chủ sở hữu & bảo mật**: luôn lọc theo `HttpSession.khachHangId` do đăng nhập xác thực; mọi tham số `khachHangId` client gửi trên query/body đều bị bỏ qua. Chưa đăng nhập → HTTP 401 `{ success: false, message }`.
+- **Chủ sở hữu & bảo mật**: luôn lọc theo danh tính khách hàng đã xác thực bằng JWT và phiên DB; mọi tham số `khachHangId` client gửi trên query/body đều bị bỏ qua. Chưa đăng nhập → HTTP 401 `{ success: false, message }`.
 - **Nguồn dữ liệu & thứ tự**: đọc từ `tblGiaoDichDoiDiem gd` (chỉ chứa phiếu đổi thành công) nối `tblQuaTang qt ON qt.id = gd.tblQuaTangId` và `tblVoucherKhachHang vc ON vc.tblGiaoDichDoiDiemId = gd.id` (liên kết gián tiếp Q3, không thêm bảng/cột). Sắp xếp mới nhất trước: `gd.thoiGian DESC, gd.id DESC`.
 - **Trường trả về mỗi dòng (`VoucherKhachHang`)**:
   - `id`, `maVoucher`, `ngayNhan` (hạn suy ra = `ngayNhan + 30 ngày`, không lưu cột), `ngaySuDung` (nullable), `trangThai` (`CHUA_SU_DUNG` | `DA_SU_DUNG`).
   - `giaoDichDoiDiem`: `id` (mã phiếu hiển thị `PDT-00x`), `thoiGian`, `soDiemTru`, `diemConLai` (**ảnh chụp** số điểm còn lại tại thời điểm đổi, không đổi khi `tongDiem` biến động về sau), `khachHang` (`id`), `quaTang` (`id` → mã `PT0x`, `tenQua`, `loaiQua`, `soDiem`, `soLuong`, `moTa`, `giaTriGiam`).
 - **Hiển thị trên `GDChonQua.tsx`**: bảng `#tblLichSuDoiQua` nằm ngay trong màn hình đổi điểm hiện có (không thêm trang thứ 13); khi danh sách rỗng hiển thị rõ `"Chưa có lịch sử đổi quà."`; sau khi đổi quà thành công và quay về danh mục, lịch sử tải lại có ngay phiếu mới.
+
+### 7.3. Phiên JWT (grilling Q1–Q16, xác nhận 09/11/2026)
+
+- Giữ ba controller nghiệp vụ; login/refresh/me/logout ở `DangKyController`. Bỏ hoàn toàn đường xác thực
+  `HttpSession`, không hỗ trợ hai cơ chế song song. API danh mục vẫn yêu cầu đăng nhập như trước.
+- `ThongTinDangNhap = { accessToken, expiresAt, sessionExpiresAt, sessionId, khachHang }`.
+  Login và `POST /api/auth/refresh` trả kiểu này trong envelope hiện tại; refresh thay cookie mới.
+  `GET /api/auth/me` dùng Bearer, trả `KhachHang` mới đọc từ DB.
+  `POST /api/auth/logout` thu hồi phiên của cookie refresh và trả JSON thành công, không dùng 204.
+  Logout gửi `X-Auth-Session: <sessionId đã chụp khi bấm nút>`; server đối chiếu với sid trong cookie
+  đã kiểm tra chữ ký. Cookie đã chuyển sang phiên khác → 409 `SESSION_CHANGED`, không thu hồi phiên
+  thay thế và không sửa cookie. Thông báo logout giữa các tab cũng phải gắn đúng sessionId.
+- Access JWT HS256: hạn 15 phút (không vượt hạn phiên), kiểm tra chữ ký, thuật toán cố định, issuer,
+  audience, loại token, subject và UUID phiên. Refresh token cũng được ký, có loại/audience riêng để
+  nhận diện replay của token cũ mà không cho kẻ đoán UUID thu hồi phiên; DB chỉ lưu SHA-256 token.
+  Mọi request được bảo vệ phải kiểm tra phiên DB chưa thu hồi/chưa hết hạn.
+- Phiên hết hạn tuyệt đối sau 7 ngày từ login; refresh không kéo dài mốc đó. Mỗi trình duyệt/thiết bị
+  độc lập; login thành công thay tài khoản sẽ thu hồi phiên cũ của cookie hiện tại, không đá thiết bị khác.
+  `tblPhienDangNhap` tồn tại qua restart backend nếu DB và khóa ký giữ nguyên.
+- Refresh khóa hàng phiên và xoay token nguyên tử. Token trước vừa dùng bị lặp trong 5 giây:
+  HTTP 409 `REFRESH_CONFLICT`, không cấp token, không sửa/xóa cookie, không thu hồi phiên.
+  Replay token ký hợp lệ ngoài cửa sổ này thu hồi phiên, kể cả access JWT chưa hết 15 phút.
+  Token giả không được phép thu hồi phiên khác.
+- Refresh cookie `HttpOnly`, `SameSite=Strict`, host-only, `Path=/api/auth`, hạn bằng thời gian còn lại
+  của phiên; `Secure` bật khi HTTPS. Các POST login/refresh/logout yêu cầu `X-CSRF-Protection: 1`;
+  kiểm tra Origin theo danh sách cấu hình khi có Origin và không bật CORS tùy tiện.
+  Quyết định xác thực/CSRF không được dùng path thô khác cách MVC định tuyến; từ chối đường dẫn
+  không canonical (mã hóa/path parameter) bằng HTTP 400 `INVALID_REQUEST_PATH` trước khi có thể bỏ qua filter hoặc chuyển tới controller.
+- `ApiResponse` được bổ sung `code` tùy chọn: access hết hạn → 401 `ACCESS_TOKEN_EXPIRED`;
+  phiên/token không hợp lệ → 401 `SESSION_INVALID`; refresh tranh chấp → 409 `REFRESH_CONFLICT`.
+  Không đưa token, hash, password hoặc stacktrace vào log/lỗi; auth response dùng `Cache-Control: no-store`.
+- Frontend access chỉ ở bộ nhớ; phối hợp refresh/login/logout giữa các tab, không truyền token qua storage.
+  Các tab cùng origin chung tài khoản/phiên, đồng bộ đăng xuất/đổi tài khoản; không tự gửi lại giao dịch
+  dưới tài khoản khác. Khi access hết hạn chỉ refresh và gửi lại request tối đa một lần sau 401 từ lớp
+  xác thực (nghiệp vụ chưa chạy); không retry mạng/timeout/5xx, không replay sau đăng nhập mới.
+- Reload/mở lại trình duyệt lấy access mới qua cookie rồi hồ sơ server; có trạng thái đang khôi phục
+  và cho thử lại khi lỗi mạng, không coi lỗi mạng là mất phiên. Hết/thu hồi phiên xóa UI và về đăng nhập.
+  Nếu mất phản hồi cookie sau rotation có thể phải đăng nhập lại, không khôi phục bằng token cũ.
+- Logout chỉ báo thành công sau server xác nhận thu hồi cả access/refresh phiên hiện tại.
+  Lỗi mạng báo chưa thể đăng xuất và cho thử lại. Hóa đơn vẫn theo R4–R5: không hủy/gia hạn do logout,
+  hết phiên hoặc reload, không khôi phục màn thanh toán.
+- `JWT_SECRET` bắt buộc (ít nhất 32 byte), không có khóa mặc định; cấu hình thiếu/sai phải fail startup.
+  `AUTH_COOKIE_SECURE` mặc định false cho HTTP demo; HTTPS phải bật true.
+  `AUTH_ALLOWED_ORIGINS` mặc định `http://localhost:5173,http://127.0.0.1:5173`; thêm origin triển khai
+  qua cấu hình. Không thêm Redis, quản trị thiết bị, đổi mật khẩu, RBAC hay hạ tầng production.
+
 
 ## 8. Seed data (mốc 27/09/2026, R12)
 
@@ -268,7 +314,7 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │       ├── types.ts              # kiểu hồ sơ, đặt vé và đổi điểm dùng chung
 │       ├── styles.css
 │       ├── ui/                   # primitives, data model cho view và preview mẫu
-│       ├── api/httpClient.ts     # HTTPClient.fetch()
+│       ├── api/                  # httpClient.ts (Bearer/retry), authSession.ts (phiên), transport.ts (fetch/envelope)
 │       └── pages/                # DangNhap, GDDangKyTaiKhoan, GDKhachHangHome + 9 màn nghiệp vụ
 ├── backend/                      # Spring Boot (Maven)
 │   ├── Dockerfile                # maven build → JRE 21
@@ -277,13 +323,14 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │   └── src/main/
 │       ├── java/com/cineman/
 │       │   ├── controller/       # DangKyController, DatVeController, DoiDiemController
+│       │   ├── auth/             # JWT, filter xác thực/CSRF, cookie và vòng đời phiên
 │       │   ├── dao/              # DAO + ThanhVienDAO, KhachHangDAO, PhimDAO, KhungGioDAO,
 │       │   │                     # SuatChieuDAO, GheDAO, VeDAO, HoaDonDAO,
-│       │   │                     # VoucherKhachHangDAO, GiaoDichDoiDiemDAO, QuaTangDAO
+│       │   │                     # VoucherKhachHangDAO, GiaoDichDoiDiemDAO, QuaTangDAO, PhienDangNhapDAO
 │       │   └── entity/           # ThanhVien, KhachHang, Phim, KhungGio, PhongChieu, SuatChieu,
 │       │                         # LoaiGhe, Ghe, Ve, HoaDon, QuaTang (+3 lớp con), VoucherKhachHang,
-│       │                         # GiaoDichDoiDiem
-│       └── resources/            # application.properties, schema.sql, data.sql
+│       │                         # GiaoDichDoiDiem, PhienDangNhap (kỹ thuật)
+│       └── resources/            # application.properties, schema.sql, data.sql, migrations/
 ```
 
 > Tên file/lớp giữ tiếng Việt không dấu như bc để đối chiếu sơ đồ (VD `ThanhVienDAO`, `GDChonGhe.tsx`).
@@ -300,12 +347,16 @@ Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet
 Nguồn sơ đồ đổi điểm ở `diagrams/puml/hinh-3-22-hoat-dong-doi-diem.puml` và
 `diagrams/puml/hinh-3-25-tuan-tu-doi-diem.puml` đã bổ sung lịch sử theo issue #13;
 ảnh SVG/PNG trong `diagrams/out/` được render từ nguồn, không sửa ảnh bằng tay.
+`diagrams/puml/phien-jwt.puml` mô tả đầy đủ bảng phiên kỹ thuật và khóa ngoại đến khách hàng;
+hai sơ đồ đổi điểm dùng danh tính JWT đã kiểm tra phiên DB thay cho `HttpSession`.
 Khi đồng bộ với repo phân tích, cần cập nhật nhánh mock thất bại ở R4: giữ hóa đơn chờ
 thanh toán để thử lại trong hạn theo story 35 của issue #1.
 
 ## 11. Chạy & build
 
 ```bash
+# Tạo một lần và lưu bí mật để dùng lại qua restart/recreate backend:
+export JWT_SECRET="$(openssl rand -hex 32)"
 docker compose up --build        # mysql:3306, backend:8080, frontend:5173 (DB seed mới mỗi lần down/up)
 # frontend: build ./frontend, node:24-alpine, API_PROXY_TARGET=http://backend:8080, depends_on backend
 #   → Vite dev server lắng nghe 0.0.0.0:5173, proxy /api sang backend nội bộ.
@@ -317,6 +368,10 @@ cd frontend && npm ci && npm run dev    # localhost:5173, /api → http://localh
 cd backend && mvn test              # H2 chế độ MySQL, tự nạp schema.sql + data.sql
 cd frontend && npm run build        # tsc --noEmit && vite build → dist/
 ```
+
+DB đang có dữ liệu chỉ chạy migration bổ sung bảng phiên
+`backend/src/main/resources/migrations/20261109-jwt-session.sql`, không nạp lại `schema.sql`/`data.sql`.
+`JWT_SECRET` phải được đặt cả khi chạy backend ngoài Compose; profile test dùng khóa riêng chỉ cho test.
 
 Kiểm thử M1 có thể chạy lại trên **DB MySQL riêng, được phép xóa schema/seed**:
 
@@ -346,8 +401,14 @@ Không giải mã bù ở frontend. DB đã nhập sai cần khôi phục dữ l
 schema/seed khi đó là DB phát triển được phép xóa dữ liệu (xem README).
 
 
-UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;
- Lightpanda không tạo ảnh render và không thay cho kiểm tra bằng mắt ở khổ hẹp.
+Kiểm chứng JWT: `mvn test` (80 test), `M1IntegrationTest` trên MySQL 8.4 (23 test), frontend production
+build và smoke API seed/giữ ghế hết hạn 300 giây thực. Phiên + refresh tiếp tục hợp lệ sau restart backend
+khi giữ DB/khóa ký. Client được smoke với hai instance module sản xuất độc lập trên Node 26 dùng Web Locks
+và BroadcastChannel thật, gọi API MySQL: refresh single-flight, login đồng thời, logout chờ login mới,
+thông báo logout cũ, không replay giao dịch dưới tài khoản mới hoặc sau mất phản hồi.
+Đây không phải kiểm chứng trình duyệt: Lightpanda ở origin local không cung cấp Web Locks; DOM đã
+xác nhận màn thông báo không hỗ trợ. Chưa kiểm chứng đầy đủ luồng login/nhiều tab hoặc bố cục bằng mắt
+trong trình duyệt có Web Locks; Lightpanda không tạo ảnh render.
 
 `npm ci` cài đúng theo `package-lock.json` (Dockerfile dùng lệnh này); `npm install` chỉ khi cần cập nhật lockfile.
 `API_PROXY_TARGET` mặc định `http://localhost:8080`, trong compose đặt `http://backend:8080`.
@@ -368,10 +429,10 @@ Image frontend `node:24-alpine` — Node 24 thỏa `engines` của Vite 8 và `@
 | Q3 | Thêm `GiaoDichDoiDiem`, ghi phiếu trước voucher | ✅ chốt |
 | Q4 | Giữ 3 lớp con `QuaTang`; 1 bảng `tblQuaTang` (`loaiQua` + `giaTriGiam`), bỏ bảng tách `tblVoucherGiamGia` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | ✅ chốt |
 | Q5–Q6 | Chốt R1–R12 | ✅ chốt |
-| Q7 | Schema 13 bảng / 14 khóa ngoại, FK `tblXId` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | ✅ chốt |
+| Q7 | 13 bảng nghiệp vụ / 14 FK + `tblPhienDangNhap` kỹ thuật / 1 FK; tổng 14 bảng / 15 FK (JWT, xác nhận 09/11/2026) | ✅ chốt |
 | Q8 | 12 trang `GD*.tsx` | ✅ chốt |
 | Q9 | Java Spring Boot, DAO chữ ký _fix | ✅ chốt |
-| Q10 | Session mock + cổng mock | ✅ chốt |
+| Q10 | Phiên JWT (§7.3) + cổng thanh toán mock | ✅ chốt |
 | Q11 | Diagrams _fix + seed + docker | ✅ chốt |
 
 Chi tiết mục 10–12 đã được gộp vào file này; nếu đổi quyết định, sửa mục liên quan trong cùng commit.

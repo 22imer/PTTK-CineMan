@@ -1,0 +1,45 @@
+@startuml phien-jwt
+' Phần mở rộng kỹ thuật JWT; 13 bảng nghiệp vụ giữ nguyên (ARCHITECTURE §3, §7.3).
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 150
+hide circle
+left to right direction
+
+title Phiên đăng nhập JWT — phần mở rộng kỹ thuật
+
+entity "tblKhachHang (đã có)" as KH {
+  * tblThanhVienId : INT <<PK, FK>>
+}
+
+entity "tblPhienDangNhap" as PHIEN {
+  * id : VARCHAR(36) <<PK>>
+  --
+  * tblKhachHangId : INT <<FK>>
+  * refreshTokenHash : CHAR(64)
+  previousTokenHash : CHAR(64)
+  xoayLuc : DATETIME(3)
+  * ngayTao : DATETIME(3)
+  * hetHan : DATETIME(3)
+  thuHoiLuc : DATETIME(3)
+}
+
+KH ||--o{ PHIEN : mỗi thiết bị một phiên
+
+note bottom of PHIEN
+  Chỉ lưu SHA-256 refresh token, không lưu token thô.
+  Hạn tuyệt đối 7 ngày; access Bearer tối đa 15 phút.
+  Refresh khóa hàng và xoay hash nguyên tử.
+  Lặp token trước trong 5 giây: 409, không cấp token.
+  Replay ngoài cửa sổ: thu hồi phiên.
+  Mọi API được bảo vệ kiểm tra phiên DB chưa thu hồi/hết hạn.
+  Đăng xuất không thay đổi hóa đơn hoặc hạn giữ ghế 300 giây.
+end note
+
+legend bottom
+  Chỉ hiển thị khóa liên kết của bảng khách hàng hiện có.
+  Tổng schema: 13 bảng nghiệp vụ + 1 bảng kỹ thuật, 15 khóa ngoại.
+endlegend
+@enduml

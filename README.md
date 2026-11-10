@@ -14,10 +14,10 @@ Thanh toán hiện dùng **mock**, chưa kết nối cổng thanh toán thật. 
 | --- | --- | --- |
 | Frontend | React, TypeScript, Vite | Giao diện và gọi API qua `HTTPClient.fetch()` |
 | Backend | Java 21, Spring Boot, JdbcTemplate | REST API, xử lý nghiệp vụ và giao dịch |
-| Cơ sở dữ liệu | MySQL 8.4 | 13 bảng nghiệp vụ, 14 khóa ngoại |
+| Cơ sở dữ liệu | MySQL 8.4 | 13 bảng nghiệp vụ + 1 bảng phiên kỹ thuật, tổng 15 khóa ngoại |
 | Kiểm thử backend | JUnit, MockMvc, H2 chế độ MySQL | Kiểm thử schema, tài khoản, đặt vé và đổi điểm |
 
-Frontend chỉ truy cập dữ liệu qua API; entity là POJO, không dùng JPA. Phiên đăng nhập do server quản lý bằng `HttpSession`; mật khẩu được băm BCrypt.
+Frontend chỉ truy cập dữ liệu qua API; entity là POJO, không dùng JPA. Xác thực REST dùng access JWT Bearer 15 phút và phiên/refresh tối đa 7 ngày; server kiểm tra phiên DB trên mỗi request để thu hồi ngay khi đăng xuất. Mật khẩu được băm BCrypt.
 
 Chi tiết hợp đồng API, mô hình dữ liệu và quy tắc R1–R12 nằm trong [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -28,6 +28,8 @@ Chi tiết hợp đồng API, mô hình dữ liệu và quy tắc R1–R12 nằm
 ```bash
 git clone https://github.com/22imer/PTTK-CineMan.git
 cd PTTK-CineMan
+# Tạo một lần, lưu bí mật để dùng lại khi restart/recreate backend:
+export JWT_SECRET="$(openssl rand -hex 32)"
 docker compose up --build
 ```
 
@@ -108,6 +110,13 @@ mysql --default-character-set=utf8mb4 -h 127.0.0.1 -u cineman -p cineman < backe
 
 Backend không tự nạp schema/seed khi chạy bình thường (`spring.sql.init.mode=never`).
 
+**Nâng cấp DB đã có dữ liệu sang JWT:** sao lưu DB rồi chạy migration chỉ tạo bảng phiên,
+không chạy lại `schema.sql`:
+
+```bash
+mysql --default-character-set=utf8mb4 -h 127.0.0.1 -u cineman -p cineman < backend/src/main/resources/migrations/20261109-jwt-session.sql
+```
+
 **Unicode (#27):** giữ file SQL ở UTF-8. `data.sql` đặt `SET NAMES utf8mb4` trước các lệnh INSERT để
 byte UTF-8 không bị MySQL đọc nhầm theo charset mặc định của client (ví dụ `latin1`).
 Charset của server/database và JDBC không sửa được dữ liệu đã nhập sai.
@@ -121,6 +130,7 @@ Trong một terminal riêng:
 
 ```bash
 cd backend
+export JWT_SECRET='<khóa bí mật đã tạo và lưu ở bước trên, ít nhất 32 byte>'
 mvn spring-boot:run
 ```
 
@@ -129,6 +139,9 @@ mvn spring-boot:run
 | `DB_URL` | JDBC MySQL tới `localhost:3306/cineman`; xem chuỗi đầy đủ trong [application.properties](backend/src/main/resources/application.properties) |
 | `DB_USER` | `cineman` |
 | `DB_PASSWORD` | `cineman` |
+| `JWT_SECRET` | **Bắt buộc**, khóa ngẫu nhiên ít nhất 32 byte UTF-8; không có mặc định, không commit khóa thật; giữ nguyên qua restart để phiên còn hiệu lực |
+| `AUTH_COOKIE_SECURE` | `false` cho HTTP local; đặt `true` khi chạy HTTPS |
+| `AUTH_ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173`; danh sách origin frontend được phép, phân cách bằng dấu phẩy |
 
 ### 3. Chạy frontend
 
@@ -140,7 +153,7 @@ npm ci
 npm run dev
 ```
 
-Mở http://localhost:5173. Proxy API mặc định trỏ tới `http://localhost:8080`; đặt `API_PROXY_TARGET` khi backend chạy ở địa chỉ khác. Nên truy cập ứng dụng qua frontend để `/api` và cookie phiên cùng origin.
+Mở http://localhost:5173. Proxy API mặc định trỏ tới `http://localhost:8080`; đặt `API_PROXY_TARGET` khi backend chạy ở địa chỉ khác. Truy cập qua frontend để `/api` và cookie refresh cùng origin. Trình duyệt cần hỗ trợ Web Locks và BroadcastChannel để phối hợp các tab.
 
 ## Kiểm thử và build
 
@@ -155,6 +168,29 @@ Chạy từ gốc repo:
 ```
 
 Bộ test backend kiểm tra đăng ký/đăng nhập, ràng buộc schema/seed, đặt vé và đổi điểm; bao gồm tranh chấp giữ ghế, hơn 8 ghế, Sweetbox, voucher, rollback, hết hạn và thanh toán lặp không cộng điểm hai lần. H2 không thay thế việc kiểm chứng trên MySQL; cách chạy `M1IntegrationTest` với **DB MySQL test riêng, được phép xóa dữ liệu** nằm trong [ARCHITECTURE.md §11](ARCHITECTURE.md#11-chạy--build).
+
+### Phiên JWT và gọi REST trực tiếp
+
+- Login/refresh trả `{success:true,data:{accessToken,expiresAt,sessionExpiresAt,sessionId,khachHang}}`.
+  Gửi access bằng `Authorization: Bearer <accessToken>` cho `/api/auth/me` và API nghiệp vụ.
+- `POST /api/auth/login`, `/api/auth/refresh`, `/api/auth/logout` yêu cầu header
+  `X-CSRF-Protection: 1`; công cụ REST cần giữ cookie `CINEMAN_REFRESH` từ login/refresh.
+  Origin nếu có phải thuộc `AUTH_ALLOWED_ORIGINS`. Không đưa token vào URL.
+  Logout còn cần `X-Auth-Session: <sessionId>` của phiên muốn kết thúc; nếu cookie đã đổi sang phiên khác,
+  server trả 409 `SESSION_CHANGED` và không thu hồi/xóa cookie của phiên mới.
+- Access chỉ giữ trong bộ nhớ; refresh cookie `HttpOnly`, `SameSite=Strict`, `Path=/api/auth`,
+  `Secure` theo cấu hình. Không lưu token/hồ sơ vào Web Storage. Reload hoặc mở lại trình duyệt
+  khôi phục đăng nhập khi phiên còn hạn, **không khôi phục tiến trình đặt vé**.
+- Refresh xoay token nhưng không kéo dài hạn 7 ngày. Đăng xuất thu hồi phiên hiện tại, không ảnh hưởng
+  thiết bị khác; các tab cùng trình duyệt đồng bộ tài khoản/đăng xuất.
+- Gửi trùng refresh cũ trong 5 giây trả 409 `REFRESH_CONFLICT`, không cấp token hoặc sửa cookie;
+  replay ngoài cửa sổ này thu hồi phiên. Mất phản hồi chứa cookie mới có thể phải đăng nhập lại.
+- Chỉ tự gửi lại request một lần sau 401 `ACCESS_TOKEN_EXPIRED` và refresh thành công cùng phiên;
+  không retry giao dịch sau lỗi mạng/5xx hoặc đăng nhập mới. Mất mạng khi logout không được báo
+  đã thu hồi thành công. Logout/hết phiên không hủy hoặc gia hạn giữ ghế 300 giây.
+- Thiếu/sai khóa ký làm backend dừng khởi động. Cấu hình demo không triển khai TLS; khi đưa lên HTTPS
+  phải bật cookie Secure và cấu hình origin thực tế. Không dùng HTTP demo cho tài khoản thật.
+
 
 ## Cấu trúc và tài liệu
 

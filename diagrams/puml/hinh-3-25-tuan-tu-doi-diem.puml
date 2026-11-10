@@ -44,10 +44,10 @@ RC -> QTD ++ : laydsQuaTang()
 QTD -> QTE ++ : khởi tạo, setter
 QTE --> QTD -- : trả về
 QTD --> RC -- : List<QuaTang>
-RC -> GDD ++ : layLichSuTheoKhachHang(HttpSession.khachHangId)
+RC -> GDD ++ : layLichSuTheoKhachHang(idKhachHang từ JWT)
 note right of GDD
   tblGiaoDichDoiDiem nối quà và voucher qua phiếu
-  WHERE khách = id trong phiên, bỏ qua id client gửi
+  WHERE khách = id từ JWT đã kiểm tra phiên DB, bỏ qua id client gửi
   ORDER BY thoiGian DESC, id DESC
   diemConLai là ảnh chụp tại lúc đổi
 end note
@@ -55,7 +55,7 @@ GDD --> RC -- : List<VoucherKhachHang> kèm phiếu + quà
 RC --> HC -- : trả về
 HC --> CQ -- : trả về
 CQ --> KH : hiển thị điểm, danh mục và tblLichSuDoiQua
-note over CQ, RC : Chưa có phiên: HTTP 401; lịch sử rỗng: "Chưa có lịch sử đổi quà."\nGET /api/doi-diem/lich-su đọc riêng cùng dữ liệu
+note over CQ, RC : Bearer JWT + phiên DB hợp lệ mới được đọc/đổi điểm.\nChưa có phiên: HTTP 401; lịch sử rỗng: "Chưa có lịch sử đổi quà."\nGET /api/doi-diem/lich-su đọc riêng cùng dữ liệu
 
 KH -> CQ : click đổi ở 1 phần thưởng
 CQ -> HC ++ : fetch()
@@ -105,7 +105,7 @@ CQ -> HC ++ : fetch("GET /api/quatang")
 HC -> RC ++ : requestMapping()
 RC -> QTD ++ : laydsQuaTang()
 QTD --> RC -- : List<QuaTang>
-RC -> GDD ++ : layLichSuTheoKhachHang(HttpSession.khachHangId)
+RC -> GDD ++ : layLichSuTheoKhachHang(idKhachHang từ JWT)
 GDD --> RC -- : lịch sử có phiếu mới
 RC --> HC -- : {dsQuaTang, tongDiem, lichSuDoiQua}
 HC --> CQ -- : trả về

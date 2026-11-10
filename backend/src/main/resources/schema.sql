@@ -2,6 +2,7 @@
 -- Dẫn xuất KHÔNG lưu cột: tổng tiền hóa đơn, hạn voucher (ngayNhan + 30 ngày), mã hiển thị (tiền tố + id, trừ maVoucher).
 -- Trùng (suất, ghế) kiểm tra ở tầng ứng dụng trong taoHoaDon — không UNIQUE trơn trên tblVe.
 
+DROP TABLE IF EXISTS tblPhienDangNhap;
 DROP TABLE IF EXISTS tblVe;
 DROP TABLE IF EXISTS tblHoaDon;
 DROP TABLE IF EXISTS tblVoucherKhachHang;
@@ -39,6 +40,20 @@ CREATE TABLE tblKhachHang (
     hangThanhVien  VARCHAR(100) NULL, -- ngưỡng đổi hạng chưa chốt (ARCHITECTURE §12)
     CONSTRAINT ck_tblKhachHang_tongDiem CHECK (tongDiem >= 0),
     CONSTRAINT fk_tblKhachHang_tblThanhVien FOREIGN KEY (tblThanhVienId) REFERENCES tblThanhVien (id)
+);
+
+-- Phiên đăng nhập JWT (ARCHITECTURE §7.3): chỉ lưu SHA-256 refresh token, không lưu token thô.
+-- previousTokenHash + xoayLuc phát hiện replay trong 5 giây; hetHan là hạn tuyệt đối, refresh không kéo dài.
+CREATE TABLE tblPhienDangNhap (
+    id                VARCHAR(36) PRIMARY KEY,
+    tblKhachHangId    INT          NOT NULL,
+    refreshTokenHash  CHAR(64)     NOT NULL,
+    previousTokenHash CHAR(64)     NULL,
+    xoayLuc           DATETIME(3)  NULL,
+    ngayTao           DATETIME(3)  NOT NULL,
+    hetHan            DATETIME(3)  NOT NULL,
+    thuHoiLuc         DATETIME(3)  NULL,
+    CONSTRAINT fk_tblPhienDangNhap_tblKhachHang FOREIGN KEY (tblKhachHangId) REFERENCES tblKhachHang (tblThanhVienId)
 );
 
 CREATE TABLE tblPhim (
