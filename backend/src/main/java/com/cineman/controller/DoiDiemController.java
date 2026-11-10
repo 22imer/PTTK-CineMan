@@ -1,5 +1,6 @@
 package com.cineman.controller;
 
+import com.cineman.auth.PhienXacThuc;
 import com.cineman.dao.GiaoDichDoiDiemDAO;
 import com.cineman.dao.KhachHangDAO;
 import com.cineman.dao.QuaTangDAO;
@@ -10,7 +11,6 @@ import com.cineman.entity.QuaTang;
 import com.cineman.entity.VoucherKhachHang;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,8 +32,8 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Đổi điểm thưởng (ARCHITECTURE §7): xem danh mục quà + đổi điểm thành voucher.
  *
- * <p>Danh mục luôn đọc lại số điểm hiện tại từ DB, không lấy từ client. Đổi điểm chỉ tin
- * {@link HttpSession} do server xác thực (khóa {@link DangKyController#KHOA_PHIEN_KHACH_HANG});
+ * <p>Danh mục luôn đọc lại số điểm hiện tại từ DB, không lấy từ client. Đổi điểm chỉ tin danh tính đã
+ * xác thực bởi {@link com.cineman.auth.AuthFilter} (Bearer JWT + phiên DB, đọc qua {@link PhienXacThuc});
  * mọi id khách hàng client gửi kèm đều bị bỏ qua.
  *
  * <p>{@link #thucHienDoiDiem} là một biên {@code @Transactional} công khai duy nhất: khóa khách rồi
@@ -183,14 +183,10 @@ public class DoiDiemController {
         return loi(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý yêu cầu do lỗi dữ liệu.");
     }
 
-    /** Chỉ đọc phiên có sẵn; khách ẩn danh không bị tạo phiên mới. */
+    /** Danh tính do filter xác thực; không đọc/khởi tạo HttpSession nên khách ẩn danh không có phiên. */
     private static Integer khachHangDangNhap(HttpServletRequest request) {
-        HttpSession phien = request.getSession(false);
-        if (phien == null) {
-            return null;
-        }
-        Object giaTri = phien.getAttribute(DangKyController.KHOA_PHIEN_KHACH_HANG);
-        return giaTri instanceof Integer id && id > 0 ? id : null;
+        PhienXacThuc phien = PhienXacThuc.tu(request);
+        return phien == null ? null : phien.khachHangId();
     }
 
     private static <T> ResponseEntity<ApiResponse<T>> loi(HttpStatusCode status, String message) {

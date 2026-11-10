@@ -1,5 +1,6 @@
 package com.cineman.controller;
 
+import com.cineman.auth.PhienXacThuc;
 import com.cineman.dao.GheDAO;
 import com.cineman.dao.HoaDonDAO;
 import com.cineman.dao.KhungGioDAO;
@@ -15,7 +16,6 @@ import com.cineman.entity.SuatChieu;
 import com.cineman.entity.Ve;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,9 +42,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
  * Đặt vé trực tuyến (ARCHITECTURE §7, R1–R12): danh mục phim/khung giờ/suất chiếu, sơ đồ ghế, hóa đơn,
  * áp voucher, thanh toán mock và hủy.
  *
- * <p>Mọi endpoint chỉ tin phiên server ({@link DangKyController#KHOA_PHIEN_KHACH_HANG}); khách ẩn danh
- * nhận 401 và không bị tạo phiên. Id khách hàng, giá vé, điểm hay hạn giữ ghế client gửi lên đều bị bỏ
- * qua — {@link HoaDonDAO} đọc lại suất chiếu/ghế/giá và tự tính tiền, điểm, hạn.
+ * <p>Mọi endpoint chỉ tin danh tính đã xác thực bởi {@link com.cineman.auth.AuthFilter} (Bearer JWT +
+ * phiên DB còn hiệu lực, đọc qua {@link PhienXacThuc}); khách ẩn danh nhận 401 và không bị tạo phiên.
+ * Id khách hàng, giá vé, điểm hay hạn giữ ghế client gửi lên đều bị bỏ qua — {@link HoaDonDAO} đọc lại
+ * suất chiếu/ghế/giá và tự tính tiền, điểm, hạn.
  *
  * <p>Controller chỉ ánh xạ kết quả nghiệp vụ của DAO sang HTTP envelope; lỗi dữ liệu (SQL) được che
  * thành 500 an toàn, không lộ câu lệnh/stacktrace.
@@ -302,14 +303,10 @@ public class DatVeController {
         return loi(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý yêu cầu do lỗi dữ liệu.");
     }
 
-    /** Chỉ đọc phiên có sẵn; khách ẩn danh không bị tạo phiên mới. */
+    /** Danh tính do filter xác thực; không đọc/khởi tạo HttpSession nên khách ẩn danh không có phiên. */
     private static Integer khachHangDangNhap(HttpServletRequest request) {
-        HttpSession phien = request.getSession(false);
-        if (phien == null) {
-            return null;
-        }
-        Object giaTri = phien.getAttribute(DangKyController.KHOA_PHIEN_KHACH_HANG);
-        return giaTri instanceof Integer id && id > 0 ? id : null;
+        PhienXacThuc phien = PhienXacThuc.tu(request);
+        return phien == null ? null : phien.khachHangId();
     }
 
     private static <T> ResponseEntity<ApiResponse<T>> loi(HttpStatusCode status, String message) {

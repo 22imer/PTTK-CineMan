@@ -390,9 +390,9 @@ Thuộc tính tường minh/ẩn của từng trang (in/out/sub) liệt kê đ�
 **Bước 2 (đã triển khai):** chỉ 3 trang `DangNhap.tsx`, `GDDangKyTaiKhoan.tsx`, `GDKhachHangHome.tsx`.
 Đăng ký gọi `POST /api/auth/register` với body
 `{ "kh": { "username", "password", "hoTen", "ngaySinh": "YYYY-MM-DD", "gioiTinh", "diaChi", "email", "sdt" }, "xacNhanMatKhau" }`;
-đăng nhập gọi `POST /api/auth/login` với `{ "username", "password" }`. Phiên do backend giữ
-(`HttpSession.khachHangId`); FE chỉ giữ `KhachHang` trong React state, không lưu storage, reload quay lại `DangNhap`.
-Mã HTTP/thông điệp lỗi chi tiết: ARCHITECTURE.md §7.1. 9 trang còn lại thuộc bước đặt vé/đổi điểm.
+đăng nhập gọi `POST /api/auth/login` với `{ "username", "password" }`. Xác thực REST dùng access JWT
+Bearer và bảng phiên server; FE chỉ giữ token/hồ sơ trong bộ nhớ. Reload khôi phục đăng nhập qua
+refresh cookie HttpOnly, không khôi phục tiến trình đặt vé. Hợp đồng JWT: ARCHITECTURE.md §7.3.
 
 ### 11.2. Tầng DAO triển khai — hợp đồng ở ARCHITECTURE.md §5
 
@@ -445,7 +445,7 @@ Mỗi lớp biên → 1 activity; mỗi action → 1 phương thức DAO; gọi 
 
 Hợp đồng đọc lịch sử (issue #13, chi tiết ARCHITECTURE.md §7.2): `GET /api/doi-diem/lich-su`
 trả `{success: true, data: VoucherKhachHang[]}`; `GET /api/quatang` trả thêm `lichSuDoiQua`
-cùng danh mục và số dư. Lọc duy nhất theo `HttpSession.khachHangId`, bỏ qua id khách do client gửi;
+cùng danh mục và số dư. Lọc duy nhất theo danh tính JWT đã kiểm tra phiên DB, bỏ qua id khách do client gửi;
 chưa đăng nhập trả HTTP 401 với `{success: false, message}`. Nối phiếu → quà và voucher → phiếu,
 xếp `thoiGian DESC, id DESC`; mỗi dòng hiện mã phiếu, ngày đổi, mã/tên quà, `soDiemTru`,
 `diemConLai` tại lúc đổi, mã/trạng thái/ngày dùng voucher và hạn `ngayNhan + 30 ngày`.
@@ -477,18 +477,22 @@ Khách click Đăng ký trên `DangNhap.ts` → `DangNhap.ts → GDDangKyTaiKhoa
 | :--- | :--- |
 | Frontend `*.ts` | React `GD*.tsx` (12 trang) |
 | Backend "RESTController" chung + `HTTPClient.fetch()` | 3 `@RestController` nghiệp vụ + `HTTPClient.fetch()` |
-| 12 bảng, không có `GiaoDichDoiDiem` | 13 bảng: thêm `tblGiaoDichDoiDiem` (lịch sử đổi quà) |
+| 12 bảng, không có `GiaoDichDoiDiem` | 13 bảng nghiệp vụ (thêm lịch sử đổi quà) + `tblPhienDangNhap` kỹ thuật cho JWT |
 | 3 lớp con ghi gộp nhưng mô tả ít | 1 bảng `tblQuaTang` giữ `loaiQua` + `giaTriGiam`; vẫn đủ 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` |
 | Chữ ký DAO rỗng (`taoHoSo()`…) | Chữ ký `_fix` đầy đủ (xem §7.2, ARCHITECTURE.md §5) |
 | `phatHanhVe`, `capNhatTongTien` | Bỏ; dùng `capNhatTrangThaiVe`, `tinhTongTien(dsVe, voucher?)` |
 | Điểm quy đổi chỉ có ví dụ | R1: 1 điểm / 20.000đ trước voucher |
 | Hình 3.24 quá mờ | Tách 3.24a/b/c |
 | Mật khẩu thô | Băm BCrypt (lưu) |
-| `DangNhap` chỉ chuyển trang (không gọi backend) | Gọi `POST /api/auth/login` thật, nhận `KhachHang` + `HttpSession.khachHangId` |
+| `DangNhap` chỉ chuyển trang (không gọi backend) | Gọi `POST /api/auth/login` thật, nhận access JWT + hồ sơ server và refresh cookie HttpOnly |
 
 Lệnh chạy/kiểm thử: xem ARCHITECTURE.md §11 — `docker compose up --build` (mysql/backend/frontend, FE 5173),
 `cd backend && mvn test`, `cd frontend && npm run build`.
 
 Quyết định 08/11/2026 ([issue #3](https://github.com/22imer/PTTK-CineMan/issues/3)): lịch sử đổi quà dùng
 `tblGiaoDichDoiDiem` hiện có (không thêm bảng lịch sử trùng lặp); `giaTriGiam` nằm chung `tblQuaTang`,
-bỏ bảng tách `tblVoucherGiamGia`; schema đúng là **13 bảng / 14 khóa ngoại**; vẫn giữ 3 lớp con `QuaTang`.
+bỏ bảng tách `tblVoucherGiamGia`; giữ nguyên **13 bảng nghiệp vụ / 14 khóa ngoại** và 3 lớp con `QuaTang`.
+Quyết định JWT ngày 09/11/2026 bổ sung `tblPhienDangNhap` kỹ thuật / 1 FK, tổng **14 bảng / 15 FK**;
+thay hoàn toàn `HttpSession`, thêm refresh/me/logout, thu hồi phiên ngay và đồng bộ các tab theo
+ARCHITECTURE.md §7.3. Các từ “session kh/phim/suất/hóa đơn” trong kịch bản giao diện ở trên là
+React state tạm thời, không phải servlet session hoặc nơi lưu token/hóa đơn server.

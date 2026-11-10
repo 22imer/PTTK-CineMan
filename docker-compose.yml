@@ -39,6 +39,9 @@ services:
         jdbc:mysql://mysql:3306/cineman?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=SERVER
       DB_USER: cineman
       DB_PASSWORD: cineman
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to a stable random secret of at least 32 bytes}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      AUTH_ALLOWED_ORIGINS: ${AUTH_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       TZ: Asia/Ho_Chi_Minh
     depends_on:
       mysql:

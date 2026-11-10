@@ -1,5 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { renderSVG } from 'uqr';
+import {
+  dangXuat as dangXuatPhien,
+  getAuthSnapshot,
+  khoiPhucPhien,
+  subscribeAuth,
+} from './api/authSession';
 import { HTTPClient, HTTPError } from './api/httpClient';
 import type {
   DanhSachQuaTang,
@@ -9,6 +21,7 @@ import type {
   Phim,
   QuaTang,
   SuatChieu,
+  ThongTinDangNhap,
   ThongTinGhe,
   TomTatHoaDon,
   VoucherKhachHang,
@@ -42,7 +55,6 @@ import GDXacNhanDoiQua from './pages/GDXacNhanDoiQua';
 import GDThongBao from './pages/GDThongBao';
 import SiteLayout from './ui/SiteLayout';
 import ScrollbarAutohide from './ui/ScrollbarAutohide';
-import { Screen } from './ui/common';
 import Preview from './ui/Preview';
 import type {
   DoiDiemUI,
@@ -56,9 +68,6 @@ import type {
 } from './ui/models';
 
 type ManHinh =
-  | 'khach'
-  | 'dang-nhap'
-  | 'dang-ky'
   | 'trang-chu'
   | 'chon-phim'
   | 'khung-gio'
@@ -161,13 +170,16 @@ function useDemNguoc(han: string | undefined, serverNow: string | undefined): st
   return conLai;
 }
 
-function TaiKhoanApp() {
-  const requested = params.get('screen');
-  const [manHinh, setManHinh] = useState<ManHinh>(
-    requested === 'dang-ky' || requested === 'dang-nhap' ? requested : 'dang-nhap',
-  );
-  const [khachHang, setKhachHang] = useState<KhachHang | null>(null);
-  const [thongBaoDangKy, setThongBaoDangKy] = useState('');
+function PhienApp({ phien }: { phien: ThongTinDangNhap }) {
+  const [manHinh, setManHinh] = useState<ManHinh>('trang-chu');
+  const [khachHang, setKhachHang] = useState<KhachHang>(phien.khachHang);
+  const [dangXuat, setDangXuat] = useState(false);
+  const [loiDangXuat, setLoiDangXuat] = useState<string | undefined>();
+
+  // Cùng phiên nhưng hồ sơ có thể mới sau refresh; đổi phiên/tài khoản sẽ remount cả cây này.
+  useEffect(() => {
+    setKhachHang(phien.khachHang);
+  }, [phien.khachHang]);
 
   // State đặt vé
   const [dsPhim, setDsPhim] = useState<Phim[]>([]);
@@ -206,6 +218,19 @@ function TaiKhoanApp() {
   const [voucherMoi, setVoucherMoi] = useState<VoucherKhachHang | null>(null);
 
   const conLai = useDemNguoc(tomTatHoaDon?.hoaDon.hetHan, tomTatHoaDon?.serverNow);
+
+  async function xuLyDangXuat() {
+    if (dangXuat) return;
+    setDangXuat(true);
+    setLoiDangXuat(undefined);
+    try {
+      await dangXuatPhien();
+    } catch (error) {
+      setLoiDangXuat(thongDiepLoi(error, 'Không thể đăng xuất. Vui lòng thử lại.'));
+    } finally {
+      setDangXuat(false);
+    }
+  }
 
   async function moChonPhim() {
     setManHinh('chon-phim');
@@ -416,7 +441,7 @@ function TaiKhoanApp() {
       );
       if (ketQua.hoaDon.trangThai === 'DA_THANH_TOAN') {
         setTomTatHoaDon(ketQua);
-        setKhachHang((kh) => (kh ? { ...kh, tongDiem: ketQua.tongDiem } : kh));
+        setKhachHang((kh) => ({ ...kh, tongDiem: ketQua.tongDiem }));
         setManHinh('ket-qua-thanh-toan');
         return;
       }
@@ -443,7 +468,7 @@ function TaiKhoanApp() {
         },
       );
       setTomTatHoaDon(daTra);
-      setKhachHang((kh) => (kh ? { ...kh, tongDiem: daTra.tongDiem } : kh));
+      setKhachHang((kh) => ({ ...kh, tongDiem: daTra.tongDiem }));
       setManHinh('ket-qua-thanh-toan');
     } catch (err) {
       setLoiVoucher(thongDiepLoi(err, 'Thanh toán không thành công.'));
@@ -460,7 +485,7 @@ function TaiKhoanApp() {
       const duLieu = await HTTPClient.fetch<DanhSachQuaTang>('/api/quatang');
       setDsQuaTang(duLieu.dsQuaTang);
       setLichSuDoiQua(duLieu.lichSuDoiQua);
-      setKhachHang((kh) => (kh ? { ...kh, tongDiem: duLieu.tongDiem } : kh));
+      setKhachHang((kh) => ({ ...kh, tongDiem: duLieu.tongDiem }));
       setTtQuaTang(duLieu.dsQuaTang.length === 0 ? 'empty' : 'ready');
     } catch (err) {
       setLoiQuaTang(thongDiepLoi(err, 'Không tải được danh mục quà tặng.'));
@@ -470,7 +495,7 @@ function TaiKhoanApp() {
 
   function chonQua(quaUi: QuaTangUI) {
     const found = dsQuaTang.find((q) => q.id === quaUi.id);
-    if (!found || !khachHang) return;
+    if (!found) return;
     if (found.soLuong <= 0) {
       setLoiQuaTang('Phần quà đã hết hàng.');
       return;
@@ -494,9 +519,10 @@ function TaiKhoanApp() {
         body: JSON.stringify({ quaTangId: quaChon.id }),
       });
       setVoucherMoi(vc);
-      setKhachHang((kh) =>
-        kh ? { ...kh, tongDiem: vc.giaoDichDoiDiem.diemConLai } : kh,
-      );
+      setKhachHang((kh) => ({
+        ...kh,
+        tongDiem: vc.giaoDichDoiDiem.diemConLai,
+      }));
       setQuaChon(null);
       setManHinh('thong-bao');
     } catch (err) {
@@ -507,7 +533,7 @@ function TaiKhoanApp() {
   }
 
   const hoaDonUi: HoaDonUI | null = useMemo(() => {
-    if (!tomTatHoaDon || !khachHang) return null;
+    if (!tomTatHoaDon) return null;
     const hd = tomTatHoaDon.hoaDon;
     const sc = hd.dsVe[0]?.suatChieu || suatChieuChon;
     if (!sc) return null;
@@ -546,21 +572,22 @@ function TaiKhoanApp() {
     };
   }, [tomTatHoaDon, khachHang, suatChieuChon, conLai]);
 
-  const headerActions = !khachHang ? (
+  const headerActions = (
     <>
-      <button className="btn btn--ghost" type="button" onClick={() => setManHinh('dang-nhap')}>
-        Đăng nhập
-      </button>
-      <button className="btn btn--primary" type="button" onClick={() => setManHinh('dang-ky')}>
-        Đăng ký thành viên
+      {manHinh !== 'trang-chu' && (
+        <button className="btn btn--ghost" type="button" onClick={() => setManHinh('trang-chu')}>
+          Trang chủ
+        </button>
+      )}
+      <button
+        className="btn btn--ghost"
+        type="button"
+        onClick={() => void xuLyDangXuat()}
+        disabled={dangXuat}
+      >
+        {dangXuat ? 'Đang đăng xuất…' : 'Đăng xuất'}
       </button>
     </>
-  ) : (
-    manHinh !== 'trang-chu' && (
-      <button className="btn btn--ghost" type="button" onClick={() => setManHinh('trang-chu')}>
-        Trang chủ
-      </button>
-    )
   );
 
   const tongTienChonGhe = gheUiList
@@ -569,29 +596,21 @@ function TaiKhoanApp() {
   const diemDuKienChonGhe = Math.floor(tongTienChonGhe / 20000);
 
   return (
-    <SiteLayout name={khachHang?.hoTen} actions={headerActions}>
-      {manHinh === 'khach' && <Screen title="Trang chủ" subtitle="Chưa đăng nhập">{null}</Screen>}
-      {manHinh === 'dang-ky' && (
-        <GDDangKyTaiKhoan
-          onHuy={() => setManHinh('dang-nhap')}
-          onDangKyThanhCong={(thongBao) => {
-            setThongBaoDangKy(thongBao);
-            setManHinh('dang-nhap');
-          }}
-        />
+    <SiteLayout name={khachHang.hoTen} actions={headerActions}>
+      {loiDangXuat && (
+        <div className="form-alert" role="alert">
+          {loiDangXuat}{' '}
+          <button
+            className="link-button"
+            type="button"
+            onClick={() => void xuLyDangXuat()}
+            disabled={dangXuat}
+          >
+            Thử lại
+          </button>
+        </div>
       )}
-      {manHinh === 'dang-nhap' && (
-        <DangNhap
-          thongBao={thongBaoDangKy}
-          onDangNhapThanhCong={(kh) => {
-            setThongBaoDangKy('');
-            setKhachHang(kh);
-            setManHinh('trang-chu');
-          }}
-          onMoDangKy={() => setManHinh('dang-ky')}
-        />
-      )}
-      {manHinh === 'trang-chu' && khachHang && (
+      {manHinh === 'trang-chu' && (
         <GDKhachHangHome
           khachHang={khachHang}
           preview
@@ -667,7 +686,7 @@ function TaiKhoanApp() {
           onVeTrangChu={() => setManHinh('trang-chu')}
         />
       )}
-      {manHinh === 'chon-qua' && khachHang && (
+      {manHinh === 'chon-qua' && (
         <>
           <GDChonQua
             khachHang={khachHang.hoTen}
@@ -692,10 +711,137 @@ function TaiKhoanApp() {
           )}
         </>
       )}
-      {manHinh === 'thong-bao' && voucherMoi && khachHang && (
+      {manHinh === 'thong-bao' && voucherMoi && (
         <GDThongBao
           giaoDich={doiDiemUI(voucherMoi, khachHang.hoTen)}
           onVeDanhMuc={() => void moDoiDiem()}
+        />
+      )}
+    </SiteLayout>
+  );
+}
+
+function AuthGate() {
+  const auth = useSyncExternalStore(subscribeAuth, getAuthSnapshot, getAuthSnapshot);
+  const requested = params.get('screen');
+  const [manHinh, setManHinh] = useState<'dang-nhap' | 'dang-ky'>(
+    requested === 'dang-ky' ? 'dang-ky' : 'dang-nhap',
+  );
+  const [thongBaoDangKy, setThongBaoDangKy] = useState('');
+  const daKhoiPhuc = useRef(false);
+
+  useEffect(() => {
+    if (daKhoiPhuc.current) return;
+    daKhoiPhuc.current = true;
+    void khoiPhucPhien();
+  }, []);
+
+  const trangThai = auth.status;
+  useEffect(() => {
+    if (trangThai === 'chua-dang-nhap') {
+      setManHinh('dang-nhap');
+      setThongBaoDangKy('');
+    }
+  }, [trangThai]);
+
+  if (auth.status === 'dang-khoi-phuc') {
+    return (
+      <SiteLayout>
+        <section className="ui-page" role="status" aria-live="polite">
+          <header className="page-heading">
+            <div>
+              <h1>Đang khôi phục phiên đăng nhập…</h1>
+              <p className="page-subtitle">
+                Đang kiểm tra cookie phiên và tải hồ sơ mới nhất từ máy chủ.
+              </p>
+            </div>
+          </header>
+        </section>
+      </SiteLayout>
+    );
+  }
+
+  if (auth.status === 'loi-khoi-phuc') {
+    return (
+      <SiteLayout>
+        <section className="ui-page">
+          <header className="page-heading">
+            <div>
+              <h1>
+                {auth.loi.unsupported
+                  ? 'Không thể đồng bộ phiên đăng nhập'
+                  : 'Không thể khôi phục phiên đăng nhập'}
+              </h1>
+              <p className="page-subtitle">
+                {auth.loi.unsupported
+                  ? 'Trình duyệt cần hỗ trợ Web Locks và BroadcastChannel trên origin này.'
+                  : 'Lỗi mạng hoặc máy chủ; phiên của bạn chưa bị coi là hết hạn.'}
+              </p>
+            </div>
+          </header>
+          <p className="form-alert" role="alert">
+            {auth.loi.message}
+          </p>
+          {!auth.loi.unsupported && (
+            <div className="form-actions">
+              <button
+                className="btn btn--primary"
+                type="button"
+                onClick={() => void khoiPhucPhien()}
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+        </section>
+      </SiteLayout>
+    );
+  }
+
+  if (auth.status === 'da-dang-nhap') {
+    // Đổi phiên/tài khoản → key mới để remount và xóa toàn bộ state nghiệp vụ.
+    // Refresh cùng phiên giữ nguyên sessionId nên không làm gián đoạn thao tác đang dở.
+    return (
+      <PhienApp
+        key={`${auth.phien.sessionId}:${auth.phien.khachHang.id}`}
+        phien={auth.phien}
+      />
+    );
+  }
+
+  return (
+    <SiteLayout
+      actions={
+        <>
+          <button
+            className="btn btn--ghost"
+            type="button"
+            onClick={() => setManHinh('dang-nhap')}
+          >
+            Đăng nhập
+          </button>
+          <button
+            className="btn btn--primary"
+            type="button"
+            onClick={() => setManHinh('dang-ky')}
+          >
+            Đăng ký thành viên
+          </button>
+        </>
+      }
+    >
+      {manHinh === 'dang-ky' ? (
+        <GDDangKyTaiKhoan
+          onHuy={() => setManHinh('dang-nhap')}
+          onDangKyThanhCong={(thongBao) => {
+            setThongBaoDangKy(thongBao);
+            setManHinh('dang-nhap');
+          }}
+        />
+      ) : (
+        <DangNhap
+          thongBao={thongBaoDangKy}
+          onMoDangKy={() => setManHinh('dang-ky')}
         />
       )}
     </SiteLayout>
@@ -706,7 +852,7 @@ export default function App() {
   return (
     <>
       <ScrollbarAutohide />
-      {params.has('ui') ? <Preview /> : <TaiKhoanApp />}
+      {params.has('ui') ? <Preview /> : <AuthGate />}
     </>
   );
 }

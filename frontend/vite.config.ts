@@ -8,7 +8,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Trình duyệt luôn gọi /api cùng origin (localhost:5173) để cookie HttpSession đi kèm.
+      // Trình duyệt luôn gọi /api cùng origin (localhost:5173); cookie refresh HttpOnly
+      // (Path=/api/auth) và Bearer access JWT chỉ được gửi tới backend qua proxy này.
       '/api': {
         target: apiProxyTarget,
         changeOrigin: true,

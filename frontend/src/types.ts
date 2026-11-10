@@ -19,6 +19,20 @@ export interface KhachHang {
   hangThanhVien: string | null;
 }
 
+/**
+ * Đáp ứng của `POST /api/auth/login` và `POST /api/auth/refresh` (ARCHITECTURE §7.3).
+ * Access token chỉ giữ trong bộ nhớ; refresh token nằm trong cookie HttpOnly do trình duyệt quản lý.
+ */
+export interface ThongTinDangNhap {
+  accessToken: string;
+  /** ISO instant hết hạn access token. */
+  expiresAt: string;
+  /** ISO instant hết hạn tuyệt đối của phiên (7 ngày, không trượt theo refresh). */
+  sessionExpiresAt: string;
+  sessionId: string;
+  khachHang: KhachHang;
+}
+
 /* ------------------------------------------------------------ đặt vé (wire contract) */
 
 /** Phim — GET /api/phim. `doTuoi` chỉ hiển thị (R10). */

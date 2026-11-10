@@ -3,6 +3,7 @@ package com.cineman;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
+import com.cineman.auth.AuthFilter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -31,13 +33,17 @@ import tools.jackson.databind.ObjectMapper;
 })
 @AutoConfigureMockMvc
 class M1IntegrationTest {
+    private static final String MAT_KHAU = "Matkhau@123";
+
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     private final ObjectMapper json = new ObjectMapper();
-    private MockHttpSession session;
+    private final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
+    private String token;
 
     @BeforeEach
     void reset() throws Exception {
+        jdbc.update("DELETE FROM tblPhienDangNhap");
         jdbc.update("DELETE FROM tblVe");
         jdbc.update("DELETE FROM tblHoaDon");
         jdbc.update("DELETE FROM tblVoucherKhachHang WHERE id <> 1");
@@ -48,10 +54,18 @@ class M1IntegrationTest {
         jdbc.update("UPDATE tblQuaTang SET soLuong = CASE WHEN id = 4 THEN 0 ELSE 45 END");
         jdbc.update("UPDATE tblVoucherKhachHang SET trangThai='CHUA_SU_DUNG', ngayNhan=CURRENT_DATE, ngaySuDung=NULL WHERE id=1");
         jdbc.update("UPDATE tblSuatChieu SET giaCoSo=90000 WHERE id=3");
-        MvcResult login = call(post("/api/auth/login"), null,
-                Map.of("username", "annguyen2002", "password", "Matkhau@123"));
-        assertThat(login.getResponse().getStatus()).isEqualTo(200);
-        session = (MockHttpSession) login.getRequest().getSession(false);
+        token = dangNhap("annguyen2002", MAT_KHAU);
+    }
+
+    /** Đăng nhập thật rồi trả Bearer access token; phiên JWT thay hoàn toàn MockHttpSession. */
+    private String dangNhap(String username, String password) throws Exception {
+        MvcResult ketQua = mvc.perform(post("/api/auth/login")
+                .header(AuthFilter.HEADER_CSRF, AuthFilter.GIA_TRI_CSRF)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("username", username, "password", password))))
+                .andReturn();
+        assertThat(ketQua.getResponse().getStatus()).isEqualTo(200);
+        return root(ketQua).path("data").path("accessToken").asText();
     }
 
     @Test
@@ -134,10 +148,9 @@ class M1IntegrationTest {
 
     @Test
     void historyUsesSessionOwnerIgnoresSpoofedIdsAndSupportsEmptyCustomers() throws Exception {
-        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'history_owner','unused','Other','2000-01-01','Nam','X','history@example.com','0999999997','KHACH_HANG')");
+        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'history_owner',?,'Other','2000-01-01','Nam','X','history@example.com','0999999997','KHACH_HANG')", bcrypt.encode(MAT_KHAU));
         jdbc.update("INSERT INTO tblKhachHang (tblThanhVienId,ngayDangKy,tongDiem) VALUES (999,CURRENT_DATE,250)");
-        MockHttpSession other = new MockHttpSession();
-        other.setAttribute("khachHangId", 999);
+        String other = dangNhap("history_owner", MAT_KHAU);
         MvcResult empty = call(get("/api/doi-diem/lich-su?khachHangId=1"), other, null);
         assertThat(empty.getResponse().getStatus()).isEqualTo(200);
         assertThat(data(empty).isArray()).isTrue();
@@ -175,7 +188,7 @@ class M1IntegrationTest {
         assertThat(seats.path("dsGhe").get(2).path("hangGhe").asText()).isEqualTo("A");
         assertThat(seats.path("dsGhe").get(10).path("hangGhe").asText()).isEqualTo("B");
         assertThat(seats.path("dsGhe").get(32).path("hangGhe").asText()).isEqualTo("E");
-        MvcResult result = call(post("/api/hoadon"), session,
+        MvcResult result = call(post("/api/hoadon"), token,
                 Map.of("suatChieuId", 3, "dsGhe", List.of(3, 11), "khachHangId", 999, "giaVe", 1));
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertThat(data(result).path("tongTien").asInt()).isEqualTo(210000);
@@ -250,15 +263,14 @@ class M1IntegrationTest {
         fails(post("/api/hoadon/apdung-voucher"), Map.of("hoaDonId",id,"maVoucher","VC-VIDU-12345"));
         jdbc.update("UPDATE tblVoucherKhachHang SET trangThai='CHUA_SU_DUNG' WHERE id=1");
         // A distinct customer cannot borrow the seed customer's voucher or invoice.
-        MockHttpSession original = session;
-        session = new MockHttpSession();
-        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'other','unused','Other','2000-01-01','Nam','X','other@example.com','0999999999','KHACH_HANG')");
+        String original = token;
+        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'other',?,'Other','2000-01-01','Nam','X','other@example.com','0999999999','KHACH_HANG')", bcrypt.encode(MAT_KHAU));
         jdbc.update("INSERT INTO tblKhachHang (tblThanhVienId,ngayDangKy,tongDiem) VALUES (999,CURRENT_DATE,250)");
-        session.setAttribute("khachHangId",999);
+        token = dangNhap("other", MAT_KHAU);
         fails(post("/api/hoadon/"+id+"/thanh-toan"), null);
         int foreign = create(List.of(4)).path("hoaDon").path("id").asInt();
         fails(post("/api/hoadon/apdung-voucher"), Map.of("hoaDonId",foreign,"maVoucher","VC-VIDU-12345"));
-        session = original;
+        token = original;
         String physical = ok(post("/api/doi-diem"), Map.of("quaTangId",3)).path("maVoucher").asText();
         fails(post("/api/hoadon/apdung-voucher"), Map.of("hoaDonId",id,"maVoucher",physical));
         assertThat(jdbc.queryForObject("SELECT tblVoucherKhachHangId FROM tblHoaDon WHERE id=?",Integer.class,id)).isNull();
@@ -271,7 +283,7 @@ class M1IntegrationTest {
         try (var pool = Executors.newFixedThreadPool(2)) {
             var action = (java.util.concurrent.Callable<Integer>) () -> {
                 ready.countDown(); start.await();
-                return call(post("/api/hoadon"),session,Map.of("suatChieuId",3,"dsGhe",List.of(3))).getResponse().getStatus();
+                return call(post("/api/hoadon"),token,Map.of("suatChieuId",3,"dsGhe",List.of(3))).getResponse().getStatus();
             };
             var a=pool.submit(action); var b=pool.submit(action);
             ready.await(); start.countDown();
@@ -286,7 +298,7 @@ class M1IntegrationTest {
         ok(get("/api/quatang"), null);
         jdbc.update("UPDATE tblKhachHang SET tongDiem=100 WHERE tblThanhVienId=1");
         jdbc.update("UPDATE tblQuaTang SET soLuong=1 WHERE id=2");
-        List<Integer> statuses = race(() -> call(post("/api/doi-diem"), session,
+        List<Integer> statuses = race(() -> call(post("/api/doi-diem"), token,
                 Map.of("quaTangId",2)).getResponse().getStatus());
         assertThat(statuses).contains(200).filteredOn(s -> s==200).hasSize(1);
         assertThat(number("SELECT tongDiem FROM tblKhachHang WHERE tblThanhVienId=1")).isZero();
@@ -304,8 +316,8 @@ class M1IntegrationTest {
         }
         CountDownLatch ready=new CountDownLatch(2), start=new CountDownLatch(1);
         try(var pool=Executors.newFixedThreadPool(2)) {
-            var one=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/hoadon/"+a+"/thanh-toan"),session,null).getResponse().getStatus();});
-            var two=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/hoadon/"+b+"/thanh-toan"),session,null).getResponse().getStatus();});
+            var one=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/hoadon/"+a+"/thanh-toan"),token,null).getResponse().getStatus();});
+            var two=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/hoadon/"+b+"/thanh-toan"),token,null).getResponse().getStatus();});
             ready.await();start.countDown();
             assertThat(List.of(one.get(),two.get())).contains(200).filteredOn(s -> s==200).hasSize(1);
             assertThat(number("SELECT COUNT(*) FROM tblHoaDon WHERE id IN ("+a+","+b+") AND trangThai='CHO_THANH_TOAN'")).isEqualTo(1);
@@ -320,7 +332,7 @@ class M1IntegrationTest {
         JsonNode historyBefore = ok(get("/api/doi-diem/lich-su"), null);
         jdbc.execute("ALTER TABLE tblVoucherKhachHang ADD CONSTRAINT test_reject_new CHECK (tblGiaoDichDoiDiemId=1)");
         try {
-            MvcResult result=call(post("/api/doi-diem"),session,Map.of("quaTangId",2));
+            MvcResult result=call(post("/api/doi-diem"),token,Map.of("quaTangId",2));
             assertThat(result.getResponse().getStatus()).isBetween(400,599);
             assertThat(root(result).path("success").asBoolean()).isFalse();
             assertThat(number("SELECT tongDiem FROM tblKhachHang WHERE tblThanhVienId=1")).isEqualTo(250);
@@ -337,7 +349,7 @@ class M1IntegrationTest {
     void secondTicketInsertFailureRollsBackInvoiceAndFirstTicket() throws Exception {
         jdbc.execute("ALTER TABLE tblVe ADD CONSTRAINT test_reject_b3 CHECK (tblGheId<>11)");
         try {
-            MvcResult result=call(post("/api/hoadon"),session,Map.of("suatChieuId",3,"dsGhe",List.of(3,11)));
+            MvcResult result=call(post("/api/hoadon"),token,Map.of("suatChieuId",3,"dsGhe",List.of(3,11)));
             assertThat(result.getResponse().getStatus()).isBetween(400,599);
             assertThat(root(result).path("success").asBoolean()).isFalse();
             assertThat(count("tblHoaDon")).isZero();
@@ -353,7 +365,7 @@ class M1IntegrationTest {
         ok(post("/api/hoadon/apdung-voucher"),Map.of("hoaDonId",id,"maVoucher","VC-VIDU-12345"));
         jdbc.execute("ALTER TABLE tblKhachHang ADD CONSTRAINT test_reject_credit CHECK (tongDiem<=250)");
         try {
-            MvcResult result=call(post("/api/hoadon/"+id+"/thanh-toan"),session,null);
+            MvcResult result=call(post("/api/hoadon/"+id+"/thanh-toan"),token,null);
             assertThat(result.getResponse().getStatus()).isBetween(400,599);
             assertThat(root(result).path("success").asBoolean()).isFalse();
             assertThat(text("SELECT trangThai FROM tblHoaDon WHERE id="+id)).isEqualTo("CHO_THANH_TOAN");
@@ -398,14 +410,13 @@ class M1IntegrationTest {
 
     @Test
     void differentCustomersCannotBothTakeLastGift() throws Exception {
-        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'last_stock','unused','Other','2000-01-01','Nam','X','stock@example.com','0999999998','KHACH_HANG')");
+        jdbc.update("INSERT INTO tblThanhVien (id,username,password,hoTen,ngaySinh,gioiTinh,diaChi,email,sdt,vaiTro) VALUES (999,'last_stock',?,'Other','2000-01-01','Nam','X','stock@example.com','0999999998','KHACH_HANG')", bcrypt.encode(MAT_KHAU));
         jdbc.update("INSERT INTO tblKhachHang (tblThanhVienId,ngayDangKy,tongDiem) VALUES (999,CURRENT_DATE,250)");
         jdbc.update("UPDATE tblQuaTang SET soLuong=1 WHERE id=2");
-        MockHttpSession other=new MockHttpSession();
-        other.setAttribute("khachHangId",999);
+        String other = dangNhap("last_stock", MAT_KHAU);
         CountDownLatch ready=new CountDownLatch(2),start=new CountDownLatch(1);
         try(var pool=Executors.newFixedThreadPool(2)) {
-            var a=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/doi-diem"),session,Map.of("quaTangId",2)).getResponse().getStatus();});
+            var a=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/doi-diem"),token,Map.of("quaTangId",2)).getResponse().getStatus();});
             var b=pool.submit(() -> {ready.countDown();start.await();return call(post("/api/doi-diem"),other,Map.of("quaTangId",2)).getResponse().getStatus();});
             ready.await();start.countDown();
             assertThat(List.of(a.get(),b.get())).containsExactlyInAnyOrder(200,409);
@@ -431,7 +442,9 @@ class M1IntegrationTest {
             MvcResult result=call(get(path),null,null);
             assertThat(result.getResponse().getStatus()).isEqualTo(401);
             assertThat(result.getRequest().getSession(false)).isNull();
+            assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE)).isNull();
             assertThat(root(result).path("success").asBoolean()).isFalse();
+            assertThat(root(result).path("code").asText()).isEqualTo("SESSION_INVALID");
             assertThat(root(result).hasNonNull("data")).isFalse();
             assertThat(root(result).path("message").asText()).isNotBlank();
         }
@@ -445,7 +458,7 @@ class M1IntegrationTest {
         fails(get("/api/ghe"), null);
         fails(get("/api/suatchieu?phimId=1&ngayChieu=not-a-date"), null);
         fails(post("/api/hoadon/not-an-id/thanh-toan"), null);
-        MvcResult broken=call(post("/api/doi-diem").contentType(MediaType.APPLICATION_JSON).content("{"),session,null);
+        MvcResult broken=call(post("/api/doi-diem").contentType(MediaType.APPLICATION_JSON).content("{"),token,null);
         assertThat(broken.getResponse().getStatus()).isEqualTo(400);
         assertThat(root(broken).path("success").asBoolean()).isFalse();
         assertThat(count("tblHoaDon")).isZero();
@@ -455,19 +468,19 @@ class M1IntegrationTest {
     private JsonNode create(List<Integer> seats) throws Exception {
         return ok(post("/api/hoadon"),Map.of("suatChieuId",3,"dsGhe",seats));
     }
-    private MvcResult call(MockHttpServletRequestBuilder request, MockHttpSession who,Object body) throws Exception {
-        if(who!=null) request.session(who);
-        if(body!=null) request.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsBytes(body));
+    private MvcResult call(MockHttpServletRequestBuilder request, String bearer, Object body) throws Exception {
+        if (bearer != null) request.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer);
+        if (body != null) request.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsBytes(body));
         return mvc.perform(request).andReturn();
     }
     private JsonNode ok(MockHttpServletRequestBuilder request,Object body) throws Exception {
-        MvcResult result=call(request,session,body);
+        MvcResult result=call(request,token,body);
         assertThat(result.getResponse().getStatus()).as(result.getResponse().getContentAsString()).isEqualTo(200);
         assertThat(root(result).path("success").asBoolean()).isTrue();
         return data(result);
     }
     private void fails(MockHttpServletRequestBuilder request,Object body) throws Exception {
-        MvcResult result=call(request,session,body);
+        MvcResult result=call(request,token,body);
         assertThat(result.getResponse().getStatus()).isBetween(400,499);
         assertThat(root(result).path("success").asBoolean()).isFalse();
         assertThat(root(result).path("message").asText()).isNotBlank();

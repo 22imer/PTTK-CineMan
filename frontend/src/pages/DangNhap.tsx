@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { HTTPClient } from '../api/httpClient';
+import { dangNhap } from '../api/authSession';
 import type { KhachHang } from '../types';
 import AuthFrame from './AuthFrame';
 import PasswordInput from '../ui/PasswordInput';
@@ -7,7 +7,7 @@ import PasswordInput from '../ui/PasswordInput';
 interface DangNhapProps {
   /** Thông báo chuyển từ trang đăng ký sau khi tạo tài khoản thành công. */
   thongBao?: string;
-  onDangNhapThanhCong: (khachHang: KhachHang) => void;
+  onDangNhapThanhCong?: (khachHang: KhachHang) => void;
   onMoDangKy: () => void;
 }
 
@@ -58,12 +58,9 @@ export default function DangNhap({
     setLoi('');
 
     try {
-      const khachHang = await HTTPClient.fetch<KhachHang>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: tenDangNhap, password }),
-      });
+      const phien = await dangNhap(tenDangNhap, password);
       setPassword('');
-      onDangNhapThanhCong(khachHang);
+      onDangNhapThanhCong?.(phien.khachHang);
     } catch (error) {
       setLoi(
         error instanceof Error && error.message

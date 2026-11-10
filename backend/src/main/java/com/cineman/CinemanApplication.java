@@ -1,5 +1,6 @@
 package com.cineman;
 
+import java.time.Clock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,5 +17,11 @@ public class CinemanApplication {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /** Đồng hồ UTC dùng chung cho phiên JWT; test biên thời gian thay bằng {@code @Primary} Clock. */
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
     }
 }

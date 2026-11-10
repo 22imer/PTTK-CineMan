@@ -26,7 +26,7 @@ partition "Xử lí tại GDChonQua.ts" {
     Gọi qua HTTPClient.fetch()
     và RESTController.requestMapping()
   end note
-  :Đọc lịch sử theo HttpSession.khachHangId\n<i>GiaoDichDoiDiemDAO.layLichSuTheoKhachHang(idKhachHang) : List<VoucherKhachHang></i>;
+  :Đọc lịch sử theo khách hàng từ JWT đã kiểm tra phiên DB\n<i>GiaoDichDoiDiemDAO.layLichSuTheoKhachHang(idKhachHang) : List<VoucherKhachHang></i>;
   :Hiển thị điểm, danh sách phần thưởng (tblListQua)\nvà lịch sử (tblLichSuDoiQua), mới nhất trước;
   note right
     GET /api/quatang kèm lichSuDoiQua
