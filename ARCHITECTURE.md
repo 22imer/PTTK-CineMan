@@ -273,6 +273,10 @@ tiến trình đặt vé. `HTTPClient.fetch<T>(path, init?)` vẫn trả `data` 
   `AUTH_COOKIE_SECURE` mặc định false cho HTTP demo; HTTPS phải bật true.
   `AUTH_ALLOWED_ORIGINS` mặc định `http://localhost:5173,http://127.0.0.1:5173`; thêm origin triển khai
   qua cấu hình. Không thêm Redis, quản trị thiết bị, đổi mật khẩu, RBAC hay hạ tầng production.
+- Web Locks chỉ tồn tại trong secure context: `localhost`/`127.0.0.1` và HTTPS. Demo HTTP qua IP LAN hoặc
+  hostname Docker không có Web Locks nên UI báo không hỗ trợ và không cho đăng nhập; muốn demo từ máy khác
+  phải dùng HTTPS (bật `AUTH_COOKIE_SECURE=true`). Không thêm fallback một tab: đồng bộ tài khoản giữa tab
+  và chống xoay refresh trùng là yêu cầu đã chốt.
 
 
 ## 8. Seed data (mốc 27/09/2026, R12)
@@ -406,9 +410,11 @@ build và smoke API seed/giữ ghế hết hạn 300 giây thực. Phiên + refr
 khi giữ DB/khóa ký. Client được smoke với hai instance module sản xuất độc lập trên Node 26 dùng Web Locks
 và BroadcastChannel thật, gọi API MySQL: refresh single-flight, login đồng thời, logout chờ login mới,
 thông báo logout cũ, không replay giao dịch dưới tài khoản mới hoặc sau mất phản hồi.
-Đây không phải kiểm chứng trình duyệt: Lightpanda ở origin local không cung cấp Web Locks; DOM đã
-xác nhận màn thông báo không hỗ trợ. Chưa kiểm chứng đầy đủ luồng login/nhiều tab hoặc bố cục bằng mắt
-trong trình duyệt có Web Locks; Lightpanda không tạo ảnh render.
+Đây không phải kiểm chứng trình duyệt đầy đủ. Lightpanda ở origin local không cung cấp Web Locks và
+báo sai `Response.status` của HTTP 401 thành 407; khi kiểm tra DOM đã dùng script chỉ sửa hai điểm này
+của engine (không sửa ứng dụng) để chạy luồng thật `DangNhap` → trang chủ → reload khôi phục → đăng xuất,
+lặp 5 lần và đồng bộ đăng xuất sang tab thứ hai. Web Locks thật giữa nhiều tab, đồng hồ/độ trễ thực và
+bố cục hiển thị vẫn chưa được kiểm chứng trong trình duyệt chuẩn; Lightpanda không tạo ảnh render.
 
 `npm ci` cài đúng theo `package-lock.json` (Dockerfile dùng lệnh này); `npm install` chỉ khi cần cập nhật lockfile.
 `API_PROXY_TARGET` mặc định `http://localhost:8080`, trong compose đặt `http://backend:8080`.

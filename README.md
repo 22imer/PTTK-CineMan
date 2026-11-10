@@ -153,7 +153,7 @@ npm ci
 npm run dev
 ```
 
-Mở http://localhost:5173. Proxy API mặc định trỏ tới `http://localhost:8080`; đặt `API_PROXY_TARGET` khi backend chạy ở địa chỉ khác. Truy cập qua frontend để `/api` và cookie refresh cùng origin. Trình duyệt cần hỗ trợ Web Locks và BroadcastChannel để phối hợp các tab.
+Mở http://localhost:5173. Proxy API mặc định trỏ tới `http://localhost:8080`; đặt `API_PROXY_TARGET` khi backend chạy ở địa chỉ khác. Truy cập qua frontend để `/api` và cookie refresh cùng origin. Trình duyệt cần hỗ trợ Web Locks và BroadcastChannel để phối hợp các tab. Web Locks chỉ có trong secure context, nên mở qua IP LAN/hostname bằng HTTP sẽ bị từ chối đăng nhập; khi cần truy cập từ máy khác phải chạy HTTPS và đặt `AUTH_COOKIE_SECURE=true`.
 
 ## Kiểm thử và build
 
