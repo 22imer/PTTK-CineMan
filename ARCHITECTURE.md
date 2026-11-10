@@ -405,16 +405,24 @@ Không giải mã bù ở frontend. DB đã nhập sai cần khôi phục dữ l
 schema/seed khi đó là DB phát triển được phép xóa dữ liệu (xem README).
 
 
-Kiểm chứng JWT: `mvn test` (80 test), `M1IntegrationTest` trên MySQL 8.4 (23 test), frontend production
-build và smoke API seed/giữ ghế hết hạn 300 giây thực. Phiên + refresh tiếp tục hợp lệ sau restart backend
-khi giữ DB/khóa ký. Client được smoke với hai instance module sản xuất độc lập trên Node 26 dùng Web Locks
-và BroadcastChannel thật, gọi API MySQL: refresh single-flight, login đồng thời, logout chờ login mới,
-thông báo logout cũ, không replay giao dịch dưới tài khoản mới hoặc sau mất phản hồi.
-Đây không phải kiểm chứng trình duyệt đầy đủ. Lightpanda ở origin local không cung cấp Web Locks và
-báo sai `Response.status` của HTTP 401 thành 407; khi kiểm tra DOM đã dùng script chỉ sửa hai điểm này
-của engine (không sửa ứng dụng) để chạy luồng thật `DangNhap` → trang chủ → reload khôi phục → đăng xuất,
-lặp 5 lần và đồng bộ đăng xuất sang tab thứ hai. Web Locks thật giữa nhiều tab, đồng hồ/độ trễ thực và
-bố cục hiển thị vẫn chưa được kiểm chứng trong trình duyệt chuẩn; Lightpanda không tạo ảnh render.
+Kiểm chứng JWT: `mvn test` (80 test), `M1IntegrationTest` trên MySQL 8.4 (23 test) và frontend production
+build. Smoke API trên MySQL 8.4 phủ seed (250 điểm → đổi PT02 còn 150), voucher `VC-VIDU-12345` (120.000đ, +10 điểm),
+chặn quá 8 ghế và trùng ghế, rollback khi thiếu điểm, chặn hóa đơn của khách khác, logout thu hồi ngay,
+refresh xoay token kèm 409 trong 5 giây và replay ngoài cửa sổ thu hồi phiên; chờ **300 giây thực** xác nhận
+thanh toán muộn bị 409 và ghế được nhả. Phiên + refresh vẫn hợp lệ sau restart backend khi giữ DB/khóa ký.
+Migration chạy trên schema **trước JWT** (`ee320b2^`): 13 bảng/14 FK → 14/15, khách hàng, 250 điểm, phiếu đổi
+và vé giữ nguyên, khóa ngoại của bảng phiên chèn được. Đường dẫn không canonical (`..`, `;`, `%`, `//`) trả
+400 `INVALID_REQUEST_PATH` qua HTTP thô; đường dẫn canonical không công khai như `/api/phim`, `/api/authX`
+trả 401; cookie đã thu hồi kèm `X-Auth-Session` cũ trả 409 không xóa cookie, còn retry đúng phiên trả 200.
+Node 26 với hai instance module sản xuất độc lập (Web Locks + BroadcastChannel thật, gọi API MySQL) kiểm tra
+refresh single-flight, login đồng thời, logout chờ login mới với thứ tự khoá xác định qua `locks.query()`
+(lặp 5 vòng), thông báo logout cũ, không replay giao dịch dưới tài khoản mới hoặc sau mất phản hồi.
+DOM thật của React được chạy trong Lightpanda: form `DangNhap` → trang chủ hiện tên khách → reload khôi phục
+phiên → đăng xuất → màn đăng nhập, lặp 5 lần; đăng xuất ở một trang cũng đưa trang thứ hai về đăng nhập.
+Lightpanda không có `navigator.locks` và báo `Response.status` của 401 thành 407 (backend và Vite proxy đều
+xác nhận trả 401 bằng curl), nên khi kiểm tra DOM chỉ thêm script sửa hai khiếm khuyết engine đó, không sửa
+ứng dụng. Chưa kiểm chứng: tranh chấp Web Locks thật giữa nhiều tab (chỉ chạy trong harness Node), độ trễ
+mạng thực và bố cục hiển thị; Lightpanda không tạo ảnh render.
 
 `npm ci` cài đúng theo `package-lock.json` (Dockerfile dùng lệnh này); `npm install` chỉ khi cần cập nhật lockfile.
 `API_PROXY_TARGET` mặc định `http://localhost:8080`, trong compose đặt `http://backend:8080`.
