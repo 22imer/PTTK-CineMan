@@ -475,8 +475,9 @@ Script này không khôi phục dữ liệu nhập riêng hoặc dạng lỗi kh
 schema/seed; kiểm chứng bảo toàn mọi cột/record của 13 bảng và tính idempotent của bản sửa.
 
 
-Kiểm chứng JWT: `mvn test` (80 test), `M1IntegrationTest` trên MySQL 8.4 (23 test) và frontend production
-build. Smoke API trên MySQL 8.4 phủ seed (250 điểm → đổi PT02 còn 150), voucher `VC-VIDU-12345` (120.000đ, +10 điểm),
+Kiểm chứng JWT (trên cây đã merge `dev`, gồm cả `UnicodeRepairIntegrationTest` của #27):
+`mvn test` 81 test, 0 lỗi, 1 skip (`UnicodeRepairIntegrationTest` chỉ chạy khi đặt `UNICODE_TEST_DB_URL`),
+`M1IntegrationTest` trên MySQL 8.4 (23 test) và frontend production build. Smoke API trên MySQL 8.4 phủ seed (250 điểm → đổi PT02 còn 150), voucher `VC-VIDU-12345` (120.000đ, +10 điểm),
 chặn quá 8 ghế và trùng ghế, rollback khi thiếu điểm, chặn hóa đơn của khách khác, logout thu hồi ngay,
 refresh xoay token kèm 409 trong 5 giây và replay ngoài cửa sổ thu hồi phiên; chờ **300 giây thực** xác nhận
 thanh toán muộn bị 409 và ghế được nhả. Phiên + refresh vẫn hợp lệ sau restart backend khi giữ DB/khóa ký.
