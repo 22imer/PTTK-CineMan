@@ -327,4 +327,5 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
   .seat-map { padding: 14px 10px; }
   .seat { width: 44px; height: 44px; }
   .seat-map__row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .seat-map__seats { justify-content: flex-start; }
 }
