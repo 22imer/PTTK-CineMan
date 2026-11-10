@@ -41,6 +41,7 @@ import GDChonQua from './pages/GDChonQua';
 import GDXacNhanDoiQua from './pages/GDXacNhanDoiQua';
 import GDThongBao from './pages/GDThongBao';
 import SiteLayout from './ui/SiteLayout';
+import HallScene from './ui/HallScene';
 import ScrollbarAutohide from './ui/ScrollbarAutohide';
 import { Screen } from './ui/common';
 import Preview from './ui/Preview';
@@ -570,7 +571,7 @@ function TaiKhoanApp() {
 
   return (
     <SiteLayout name={khachHang?.hoTen} actions={headerActions}>
-      {manHinh === 'khach' && <Screen title="Trang chủ" subtitle="Chưa đăng nhập">{null}</Screen>}
+      {manHinh === 'khach' && <Screen title="Trang chủ" subtitle="Chưa đăng nhập"><HallScene /></Screen>}
       {manHinh === 'dang-ky' && (
         <GDDangKyTaiKhoan
           onHuy={() => setManHinh('dang-nhap')}

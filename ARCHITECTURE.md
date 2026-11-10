@@ -326,8 +326,9 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │       ├── main.tsx              # mount React
 │       ├── App.tsx               # điều hướng theo React state (mục 6)
 │       ├── types.ts              # kiểu hồ sơ, đặt vé và đổi điểm dùng chung
-│       ├── styles.css
-│       ├── ui/                   # primitives, data model cho view và preview mẫu
+│       ├── styles.css            # giao diện sảnh rạp pixel art (token ở :root, font Handjet qua @fontsource)
+│       ├── assets/hall-scene.svg # tranh sảnh pixel art, sinh bởi frontend/scripts/gen-hall-scene.mjs
+│       ├── ui/                   # primitives, HallScene, data model cho view và preview mẫu
 │       ├── api/httpClient.ts     # HTTPClient.fetch()
 │       └── pages/                # DangNhap, GDDangKyTaiKhoan, GDKhachHangHome + 9 màn nghiệp vụ
 ├── backend/                      # Spring Boot (Maven)
