@@ -120,9 +120,39 @@ mysql --default-character-set=utf8mb4 -h 127.0.0.1 -u cineman -p cineman < backe
 **Unicode (#27):** giữ file SQL ở UTF-8. `data.sql` đặt `SET NAMES utf8mb4` trước các lệnh INSERT để
 byte UTF-8 không bị MySQL đọc nhầm theo charset mặc định của client (ví dụ `latin1`).
 Charset của server/database và JDBC không sửa được dữ liệu đã nhập sai.
-Nếu đã thấy `Nguyá»…n VÄƒn A`, hãy sao lưu trước: chỉ nạp lại schema/seed trên DB phát triển được phép
-xóa dữ liệu. Với DB cần giữ tài khoản/giao dịch, khôi phục các trường chữ bị hỏng từ bản UTF-8 đúng;
-không chạy lại `schema.sql`, không đổi font hay giải mã lại toàn bộ phản hồi ở frontend.
+Để sửa record cũ mà **không xóa bảng hay nạp lại seed**, sao lưu DB rồi chạy script riêng:
+
+```bash
+umask 077
+mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF -h 127.0.0.1 -u cineman -p cineman > cineman-before-unicode.sql
+mysql --default-character-set=utf8mb4 -h 127.0.0.1 -u cineman -p cineman < backend/src/main/resources/repair-unicode.sql
+```
+
+Với stack Compose đang chạy từ repo này:
+
+```bash
+docker compose exec -T mysql mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF -ucineman -pcineman cineman > cineman-before-unicode.sql
+docker compose exec -T mysql mysql --default-character-set=utf8mb4 -ucineman -pcineman cineman < backend/src/main/resources/repair-unicode.sql
+```
+
+`repair-unicode.sql` cập nhật trong một transaction, chỉ các trường khớp **theo byte** với dạng
+seed bị đọc nhầm thành Latin-1, trên đúng ID seed. Chạy lại không làm đổi dữ liệu đã sửa; giữ nguyên
+chữ đã đúng/chỉnh sửa riêng, NULL, ID, mật khẩu, điểm, tồn kho và toàn bộ hóa đơn/vé/phiếu/voucher.
+Script không tự chạy khi khởi động và không sửa dữ liệu nhập riêng bị hỏng theo cách khác.
+Sau khi sửa, tải lại trang/đăng nhập lại để bỏ hồ sơ cũ đang giữ trong React state.
+Không chạy lại `schema.sql` trên DB cần giữ dữ liệu; không đổi font hay giải mã bù ở frontend.
+
+Kiểm thử script bằng MySQL **riêng, được phép xóa toàn bộ schema/seed**:
+
+```bash
+cd backend
+UNICODE_TEST_DB_URL='jdbc:mysql://127.0.0.1:13327/cineman_test?characterEncoding=UTF-8' \
+UNICODE_TEST_DB_USER=cineman UNICODE_TEST_DB_PASSWORD=cineman \
+mvn -Dtest=UnicodeRepairIntegrationTest test
+```
+
+Test chỉ bật khi có `UNICODE_TEST_DB_URL`; kiểm tra phục hồi, chạy lại không đổi và bảo toàn mọi
+cột/record của 13 bảng, kể cả dữ liệu chữ đã chỉnh riêng và tài khoản Unicode mới.
 
 ### 2. Chạy backend
 

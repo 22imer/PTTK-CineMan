@@ -394,14 +394,34 @@ Thuộc tính tường minh/ẩn của từng trang (in/out/sub) liệt kê đ�
 Bearer và bảng phiên server; FE chỉ giữ token/hồ sơ trong bộ nhớ. Reload khôi phục đăng nhập qua
 refresh cookie HttpOnly, không khôi phục tiến trình đặt vé. Hợp đồng JWT: ARCHITECTURE.md §7.3.
 
-### 11.2. Tầng DAO (lớp thiết kế) — chữ ký đã chốt ở ARCHITECTURE.md §5
+### 11.2. Tầng DAO triển khai — hợp đồng ở ARCHITECTURE.md §5
 
-- `DAO`: cung cấp kết nối chung (`con : Connection`) cho các lớp kế thừa.
-- `ThanhVienDAO`: `kiemTraThongTin`, `kiemTraEmailSDT`, `kiemTraDangNhap`
-- `KhachHangDAO`: `taoHoSo`, `kiemTraDiem`, `truDiem`, `congDiem`
-- `PhimDAO`: `laydsPhim` · `KhungGioDAO`: `laydsKhungGio` · `SuatChieuDAO`: `laydsSuatChieu`
-- `VeDAO`: `tinhtienVe`, `kiemTraVe`, `laydsVe/laydsVeConHieuLuc`, `phatHanhVe→capNhatTrangThaiVe`, `huyVe`
-- `HoaDonDAO`: `taoHoaDon(hd, dsVe)`, `tinhTongTien(dsVe, voucher?)`, `kiemtraHetHan/kiemTraHetHan(idHoaDon)`, `xacNhanThanhToan`, `huyHoaDon(idHoaDon)` · `VoucherKhachHangDAO`: `kiemTraVoucher`, `apDungVoucher`, `luuVoucher(vc)` (thay `taoVoucher`) · `GiaoDichDoiDiemDAO`: `luuGiaoDich(gd)`, `layLichSuTheoKhachHang(idKhachHang)` · `QuaTangDAO`: `laydsQuaTang`, `kiemTraSoLuong`, `capNhatSoLuong(idQua, soLuong)`
+- `DAO`: cung cấp `JdbcTemplate` dùng chung cấu hình `DataSource` của Spring; kết nối quản lý theo transaction.
+- `ThanhVienDAO`: `kiemTraThongTin`, `kiemTraEmailSDT`, `kiemTraDangNhap(ThanhVien tv)`.
+- `KhachHangDAO`: `taoHoSo`, `kiemTraDiem`, `truDiem`, `congDiem`.
+- `PhimDAO`: `laydsPhim` · `KhungGioDAO`: `laydsKhungGio` · `SuatChieuDAO`: `laydsSuatChieu` · `GheDAO`: `laydsGhe`.
+- `VeDAO`: `tinhTienVe(...): Ve`, `kiemTraVe`, `laydsVeConHieuLuc`, `capNhatTrangThaiVe`, `huyVe`.
+- `HoaDonDAO`: `taoHoaDon(hd, dsVe)`, `tinhTongTien(dsVe, voucher?)`, `kiemTraHetHan(idHoaDon)`, `xacNhanThanhToan`, `huyHoaDon(idHoaDon)` · `VoucherKhachHangDAO`: `kiemTraVoucher`, `apDungVoucher`, `luuVoucher(vc)` · `GiaoDichDoiDiemDAO`: `luuGiaoDich(gd)`, `layLichSuTheoKhachHang(idKhachHang)` · `QuaTangDAO`: `laydsQuaTang`, `kiemTraSoLuong`, `capNhatSoLuong(idQua, soLuong)`.
+
+#### 11.2.1. Thiết kế DAO đặt vé theo sơ đồ
+
+Bản trình bày theo ảnh chỉ gồm `DAO` (`-con : Connection`, `+DAO()`) và 8 DAO con:
+`ThanhVienDAO`, `KhachHangDAO`, `PhimDAO`, `KhungGioDAO`, `SuatChieuDAO`, `VeDAO`, `HoaDonDAO`, `VoucherDAO`.
+Mỗi DAO con có constructor công khai tương ứng; giữ các phương thức trong ảnh và bổ sung kiểu còn thiếu.
+Theo điều chỉnh sau khi chốt ảnh, không có lớp `GheDAO` trong thiết kế:
+`VeDAO.laydsGhe(idSuatChieu : int) : List<Ghe>` đảm nhiệm truy vấn toàn bộ ghế trong phòng của suất chiếu.
+Kết hợp với `VeDAO.laydsVe(idSuatChieu : int) : List<Ve>` để hiển thị cả ghế trống và ghế đang giữ/đã bán.
+Không thêm `themVe`, `luuVe`, `capNhatTrangThaiVe`, `tinhTongTien` hoặc `kiemTraHetHan` vào hình.
+Chỉ chuyển trách nhiệm ở mức thiết kế; backend hiện vẫn dùng `GheDAO` như §11.2.
+
+Danh sách chữ ký, trách nhiệm và bảng đối chiếu với Java nằm ở [ARCHITECTURE.md §5.1](ARCHITECTURE.md#51-thiết-kế-dao-đặt-vé-theo-sơ-đồ).
+Nguồn [PlantUML](diagrams/puml/dao-dat-ve-theo-so-do.puml) và ảnh [SVG](diagrams/out/dao-dat-ve-theo-so-do.svg)
+chỉ mô tả phần DAO đặt vé, không phải sơ đồ đầy đủ của giao diện/thực thể hoặc của chức năng đổi điểm.
+
+`taoHoaDon()` và `huyHoaDon()` là chữ ký trình bày rút gọn; không cho phép DAO tự đọc session hoặc lưu
+“hóa đơn hiện tại”. Hợp đồng triển khai ở §11.2 và `ARCHITECTURE.md §5` giữ nguyên.
+Tạo hóa đơn cùng vé phải nguyên tử; xác nhận thanh toán, bán vé, sử dụng voucher và cộng điểm cũng phải
+trong một transaction, dù trên hình là các phương thức riêng.
 
 ### 11.3. Tầng thực thể & phụ trợ
 
