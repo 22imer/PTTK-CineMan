@@ -474,7 +474,7 @@ Khách click Đăng ký trên `DangNhap.tsx` → `DangNhap.ts → GDDangKyTaiKho
 | Nội dung bc.docx | Triển khai (đã chốt) |
 | :--- | :--- |
 | Frontend `*.ts` | React `GD*.tsx` (12 trang) |
-| Backend "RESTController" chung + `HTTPClient.fetch()` | 3 `@RestController` nghiệp vụ + `HTTPClient.fetch()` |
+| Backend "RESTController" chung + `HTTPClient.fetch()` | 1 `RESTController` (`@RestController` duy nhất, gộp Auth/Booking/Reward) ở backend; `HTTPClient.fetch()` chỉ ở frontend |
 | 12 bảng, không có `GiaoDichDoiDiem` | 13 bảng: thêm `tblGiaoDichDoiDiem` (lịch sử đổi quà) |
 | 3 lớp con ghi gộp nhưng mô tả ít | 1 bảng `tblQuaTang` giữ `loaiQua` + `giaTriGiam`; vẫn đủ 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` |
 | Chữ ký DAO rỗng (`taoHoSo()`…) | Chữ ký `_fix` đầy đủ (xem §7.2, ARCHITECTURE.md §5) |

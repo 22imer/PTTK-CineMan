@@ -1,583 +1,565 @@
 {
   ".github/workflows/branch-flow.yml": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.15419,
+    "mtime": 1794386019.4293036,
+    "seen": 1794387207.6867847,
     "ast_hash": "a2c18a98bd93b7d1318c334dafec2e71",
     "semantic_hash": "a2c18a98bd93b7d1318c334dafec2e71"
   },
   ".omp/hooks/post/commit-checkpoint.ts": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.154198,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6868048,
     "ast_hash": "9467b2021949759cdfb05fbfbc164101",
     "semantic_hash": "9467b2021949759cdfb05fbfbc164101"
   },
   "backend/pom.xml": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.1542013,
+    "mtime": 1794386019.453304,
+    "seen": 1794387207.6868072,
     "ast_hash": "50bc0d1e072692f066c43ac99b76b33f",
     "semantic_hash": "50bc0d1e072692f066c43ac99b76b33f"
   },
   "backend/src/main/java/com/cineman/CinemanApplication.java": {
-    "mtime": 1794370255.2031791,
-    "seen": 1794370511.1542034,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6868093,
     "ast_hash": "ab8218db5bc6bdcab6ed95ae5b9380ee",
     "semantic_hash": "ab8218db5bc6bdcab6ed95ae5b9380ee"
   },
-  "backend/src/main/java/com/cineman/controller/ApiResponse.java": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.1542048,
-    "ast_hash": "3e773c8f9dfd4bbb928419318a542452",
-    "semantic_hash": "3e773c8f9dfd4bbb928419318a542452"
-  },
-  "backend/src/main/java/com/cineman/controller/DangKyController.java": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.1542063,
-    "ast_hash": "87a3bb1ff2f1550a9c7d7a42e1def0e3",
-    "semantic_hash": "87a3bb1ff2f1550a9c7d7a42e1def0e3"
-  },
-  "backend/src/main/java/com/cineman/controller/DatVeController.java": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.1542082,
-    "ast_hash": "f2d417638c21beee4ca451d42689826d",
-    "semantic_hash": ""
-  },
-  "backend/src/main/java/com/cineman/controller/DoiDiemController.java": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542099,
-    "ast_hash": "0d843b28ced78a35389b27be46e4f4e1",
-    "semantic_hash": ""
-  },
   "backend/src/main/java/com/cineman/dao/DAO.java": {
-    "mtime": 1794370255.2431822,
-    "seen": 1794370511.1542113,
+    "mtime": 1794386019.4293036,
+    "seen": 1794387207.6868143,
     "ast_hash": "565bd933bd8326d4e1d07ade5c52f953",
     "semantic_hash": "565bd933bd8326d4e1d07ade5c52f953"
   },
   "backend/src/main/java/com/cineman/dao/GiaoDichDoiDiemDAO.java": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.1542127,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6868162,
     "ast_hash": "280dbe42853e8da8dd3799a2eff77bc1",
     "semantic_hash": ""
   },
   "backend/src/main/java/com/cineman/dao/HoaDonDAO.java": {
-    "mtime": 1794370255.2511828,
-    "seen": 1794370511.1542137,
+    "mtime": 1794386019.4417331,
+    "seen": 1794387207.6868184,
     "ast_hash": "7ab453d50f7cca4a3d231e4633f3e992",
     "semantic_hash": ""
   },
   "backend/src/main/java/com/cineman/dao/KhachHangDAO.java": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542149,
+    "mtime": 1794386019.445304,
+    "seen": 1794387207.6868205,
     "ast_hash": "36f300af2ade42b595c92a930212df08",
     "semantic_hash": "36f300af2ade42b595c92a930212df08"
   },
   "backend/src/main/java/com/cineman/dao/KhungGioDAO.java": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.154216,
+    "mtime": 1794386019.453304,
+    "seen": 1794387207.6868231,
     "ast_hash": "068d582bee1c4963e0e63a10fd5f1a13",
     "semantic_hash": "068d582bee1c4963e0e63a10fd5f1a13"
   },
   "backend/src/main/java/com/cineman/dao/PhimDAO.java": {
-    "mtime": 1794370255.199179,
-    "seen": 1794370511.154217,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.686826,
     "ast_hash": "0ee053582d080b4a7dd00fae5d0e56d7",
     "semantic_hash": "0ee053582d080b4a7dd00fae5d0e56d7"
   },
   "backend/src/main/java/com/cineman/dao/QuaTangDAO.java": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.154218,
+    "mtime": 1794386019.4653044,
+    "seen": 1794387207.686831,
     "ast_hash": "30455d61c33e5d85aa9932686105b2f6",
     "semantic_hash": "30455d61c33e5d85aa9932686105b2f6"
   },
   "backend/src/main/java/com/cineman/dao/SuatChieuDAO.java": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.154219,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.6868358,
     "ast_hash": "d4a7c96ddc3232418cb6445d81a9b86c",
     "semantic_hash": "d4a7c96ddc3232418cb6445d81a9b86c"
   },
   "backend/src/main/java/com/cineman/dao/ThanhVienDAO.java": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.15422,
+    "mtime": 1794386019.4773045,
+    "seen": 1794387207.6868386,
     "ast_hash": "a8944f367546d8602cd51d99ddf83553",
     "semantic_hash": "a8944f367546d8602cd51d99ddf83553"
   },
   "backend/src/main/java/com/cineman/dao/VeDAO.java": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.154221,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6868412,
     "ast_hash": "7236423f61d85533aad8023a0ecd82ba",
     "semantic_hash": ""
   },
   "backend/src/main/java/com/cineman/dao/VoucherKhachHangDAO.java": {
-    "mtime": 1794370255.2431822,
-    "seen": 1794370511.154222,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.686844,
     "ast_hash": "c181d2436cb67d11c470ee3572d557d9",
     "semantic_hash": "c181d2436cb67d11c470ee3572d557d9"
   },
   "backend/src/main/java/com/cineman/entity/Ghe.java": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.1542234,
+    "mtime": 1794386019.4417331,
+    "seen": 1794387207.6868465,
     "ast_hash": "ce971d3a0f0ee1b2c5f05e2e14d366c2",
     "semantic_hash": "ce971d3a0f0ee1b2c5f05e2e14d366c2"
   },
   "backend/src/main/java/com/cineman/entity/GiaoDichDoiDiem.java": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542244,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6868482,
     "ast_hash": "b67fceae08991721fd5a661145aa3751",
     "semantic_hash": "b67fceae08991721fd5a661145aa3751"
   },
   "backend/src/main/java/com/cineman/entity/HoaDon.java": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.1542253,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6868503,
     "ast_hash": "c15fa481ce60a039a434eb1d02db7b12",
     "semantic_hash": "c15fa481ce60a039a434eb1d02db7b12"
   },
   "backend/src/main/java/com/cineman/entity/KhachHang.java": {
-    "mtime": 1794370255.199179,
-    "seen": 1794370511.1542268,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6868527,
     "ast_hash": "3b71aa81dcebd08bf25fba7358b305f1",
     "semantic_hash": "3b71aa81dcebd08bf25fba7358b305f1"
   },
   "backend/src/main/java/com/cineman/entity/KhungGio.java": {
-    "mtime": 1794370255.2071795,
-    "seen": 1794370511.1542277,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.686855,
     "ast_hash": "38236ef5bdfb42197a667fdd93b59d46",
     "semantic_hash": "38236ef5bdfb42197a667fdd93b59d46"
   },
   "backend/src/main/java/com/cineman/entity/LoaiGhe.java": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.1542287,
+    "mtime": 1794386019.4733045,
+    "seen": 1794387207.6868575,
     "ast_hash": "affaa8558b1c532830d146f0fc840a7e",
     "semantic_hash": "affaa8558b1c532830d146f0fc840a7e"
   },
   "backend/src/main/java/com/cineman/entity/Phim.java": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.1542296,
+    "mtime": 1794386019.4813046,
+    "seen": 1794387207.6868598,
     "ast_hash": "1eae45c67ddbf3fe9dcb1230b1bb5a9d",
     "semantic_hash": "1eae45c67ddbf3fe9dcb1230b1bb5a9d"
   },
   "backend/src/main/java/com/cineman/entity/PhongChieu.java": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.154231,
+    "mtime": 1794386019.484009,
+    "seen": 1794387207.6868622,
     "ast_hash": "4e4c83893e834fedb79c84d1b5a1cc53",
     "semantic_hash": "4e4c83893e834fedb79c84d1b5a1cc53"
   },
   "backend/src/main/java/com/cineman/entity/QuaTang.java": {
-    "mtime": 1794370255.2431822,
-    "seen": 1794370511.154232,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6868646,
     "ast_hash": "0e9f306a41581129c16448fcd229b20b",
     "semantic_hash": "0e9f306a41581129c16448fcd229b20b"
   },
   "backend/src/main/java/com/cineman/entity/SuatChieu.java": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.1542335,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.686869,
     "ast_hash": "363446c624b56521de5183284149ac7e",
     "semantic_hash": "363446c624b56521de5183284149ac7e"
   },
   "backend/src/main/java/com/cineman/entity/ThanhVien.java": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542344,
+    "mtime": 1794386019.4417331,
+    "seen": 1794387207.6868734,
     "ast_hash": "950b7345835f6ccb75f878d15a30e5cd",
     "semantic_hash": "950b7345835f6ccb75f878d15a30e5cd"
   },
   "backend/src/main/java/com/cineman/entity/Ve.java": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.1542354,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.686876,
     "ast_hash": "e5e274833481f59ba053f442da7e2af3",
     "semantic_hash": "e5e274833481f59ba053f442da7e2af3"
   },
   "backend/src/main/java/com/cineman/entity/VoucherGiamGia.java": {
-    "mtime": 1794370255.199179,
-    "seen": 1794370511.154236,
+    "mtime": 1794386019.453304,
+    "seen": 1794387207.6868782,
     "ast_hash": "636bb6229c5f86c66c515cd9a60d2ce7",
     "semantic_hash": "636bb6229c5f86c66c515cd9a60d2ce7"
   },
   "backend/src/main/java/com/cineman/entity/VoucherKhachHang.java": {
-    "mtime": 1794370255.2071795,
-    "seen": 1794370511.1542373,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6868808,
     "ast_hash": "eded72f9a5c932207462451044cc51c9",
     "semantic_hash": "eded72f9a5c932207462451044cc51c9"
   },
   "backend/src/main/java/com/cineman/entity/VoucherVatPham.java": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.1542382,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.6868827,
     "ast_hash": "28a322173f87222a0dc9de713fec9dc0",
     "semantic_hash": "28a322173f87222a0dc9de713fec9dc0"
   },
   "backend/src/main/java/com/cineman/entity/VoucherVeTang.java": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.154239,
+    "mtime": 1794386019.4733045,
+    "seen": 1794387207.6868849,
     "ast_hash": "db61779f0f99caeb89c5747b77fb9e2b",
     "semantic_hash": "db61779f0f99caeb89c5747b77fb9e2b"
   },
   "backend/src/main/resources/data.sql": {
-    "mtime": 1794370255.2431822,
-    "seen": 1794370511.15424,
+    "mtime": 1794386019.484009,
+    "seen": 1794387207.6868865,
     "ast_hash": "cac034ccfda56521901ca26d7aabee1e",
     "semantic_hash": ""
   },
   "backend/src/main/resources/schema.sql": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542425,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.6868908,
     "ast_hash": "18472ee567b85dc7980188e72b3c6c08",
     "semantic_hash": "18472ee567b85dc7980188e72b3c6c08"
   },
   "backend/src/test/java/com/cineman/AuthIntegrationTest.java": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.1542435,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6868954,
     "ast_hash": "5f680262b8a6e78c5a5f0238f2dd7f60",
     "semantic_hash": "5f680262b8a6e78c5a5f0238f2dd7f60"
   },
   "backend/src/test/java/com/cineman/M1IntegrationTest.java": {
-    "mtime": 1794370255.199179,
-    "seen": 1794370511.1542447,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6868975,
     "ast_hash": "6f90d4c874ff2b50bc4ff9b3bd68e1b5",
     "semantic_hash": ""
   },
   "backend/src/test/java/com/cineman/SchemaSeedTest.java": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.1542456,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6868992,
     "ast_hash": "c980f0eaad27522251b0466bcb0cf30a",
     "semantic_hash": "c980f0eaad27522251b0466bcb0cf30a"
   },
   "docker-compose.yml": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542478,
+    "mtime": 1794386019.4733045,
+    "seen": 1794387207.6869028,
     "ast_hash": "b9635cb16186def8f575cf80c5d771ac",
     "semantic_hash": "b9635cb16186def8f575cf80c5d771ac"
   },
   "frontend/package.json": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.154249,
+    "mtime": 1794386019.4417331,
+    "seen": 1794387207.686905,
     "ast_hash": "3a4a2db170884813a64197db3d1411a1",
     "semantic_hash": ""
   },
   "frontend/src/App.tsx": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.154251,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6869087,
     "ast_hash": "2a0ae474a7b233f07ad4c7136411a77c",
     "semantic_hash": ""
   },
   "frontend/src/api/httpClient.ts": {
-    "mtime": 1794370255.227181,
-    "seen": 1794370511.1542523,
-    "ast_hash": "a61f2e6496589f84a0ff02b3b444880b",
-    "semantic_hash": "a61f2e6496589f84a0ff02b3b444880b"
+    "mtime": 1794386466.9303324,
+    "seen": 1794387207.6869106,
+    "ast_hash": "6baafd0c8964193f76ded18633137370",
+    "semantic_hash": ""
   },
   "frontend/src/main.tsx": {
-    "mtime": 1794370255.2459848,
-    "seen": 1794370511.1542532,
+    "mtime": 1794386019.4813046,
+    "seen": 1794387207.686913,
     "ast_hash": "253f0ec1e5b4a79b6b3b6c65a688231f",
     "semantic_hash": ""
   },
   "frontend/src/pages/AuthFrame.tsx": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542547,
+    "mtime": 1794386019.484009,
+    "seen": 1794387207.6869152,
     "ast_hash": "7b8e0b1720c2d49852b571fd99596204",
     "semantic_hash": ""
   },
   "frontend/src/pages/DangNhap.tsx": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.1542556,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6869175,
     "ast_hash": "333c5b8b5a91f994a1c97d87af9810ae",
     "semantic_hash": "333c5b8b5a91f994a1c97d87af9810ae"
   },
   "frontend/src/pages/GDChonGhe.tsx": {
-    "mtime": 1794370255.199179,
-    "seen": 1794370511.1542566,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.68692,
     "ast_hash": "85f65bcccac16d26c21d582d25d42c22",
     "semantic_hash": "85f65bcccac16d26c21d582d25d42c22"
   },
   "frontend/src/pages/GDChonPhim.tsx": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.1542578,
+    "mtime": 1794386019.4417331,
+    "seen": 1794387207.6869228,
     "ast_hash": "ab128f56ec6dd96e6afc61be4d9a0d64",
     "semantic_hash": "ab128f56ec6dd96e6afc61be4d9a0d64"
   },
   "frontend/src/pages/GDChonQua.tsx": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.1542587,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6869247,
     "ast_hash": "3e4aa627faf1918719e5c46d4066f235",
     "semantic_hash": ""
   },
   "frontend/src/pages/GDDangKyTaiKhoan.tsx": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.15426,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.686927,
     "ast_hash": "57736d52f3fd0afa248922197a02e7cd",
     "semantic_hash": "57736d52f3fd0afa248922197a02e7cd"
   },
   "frontend/src/pages/GDKhachHangHome.tsx": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542606,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6869297,
     "ast_hash": "aef47f85a23552a03a7ebccb5fa53ab2",
     "semantic_hash": ""
   },
   "frontend/src/pages/GDKhungGio.tsx": {
-    "mtime": 1794370255.239658,
-    "seen": 1794370511.1542618,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.6869314,
     "ast_hash": "c75990e69bba27625320c28ec24a0db2",
     "semantic_hash": "c75990e69bba27625320c28ec24a0db2"
   },
   "frontend/src/pages/GDSuatChieu.tsx": {
-    "mtime": 1794370255.2459848,
-    "seen": 1794370511.1542628,
+    "mtime": 1794386019.4733045,
+    "seen": 1794387207.686934,
     "ast_hash": "1d2833e14dc2c07ac562314418f5e2b8",
     "semantic_hash": "1d2833e14dc2c07ac562314418f5e2b8"
   },
   "frontend/src/pages/GDThanhToan.tsx": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542637,
+    "mtime": 1794386019.4773045,
+    "seen": 1794387207.6869366,
     "ast_hash": "28b3d28484f13b788e3195f3b509ed62",
     "semantic_hash": "28b3d28484f13b788e3195f3b509ed62"
   },
   "frontend/src/pages/GDThongBao.tsx": {
-    "mtime": 1794370255.1951785,
-    "seen": 1794370511.154265,
+    "mtime": 1794386019.484009,
+    "seen": 1794387207.6869392,
     "ast_hash": "516c57295d3f14fce1cdbf4c2bc97bba",
     "semantic_hash": "516c57295d3f14fce1cdbf4c2bc97bba"
   },
   "frontend/src/pages/GDXacNhanDoiQua.tsx": {
-    "mtime": 1794370255.2031791,
-    "seen": 1794370511.1542659,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6869411,
     "ast_hash": "adbace0db42d8c804855c40ca79e5524",
     "semantic_hash": "adbace0db42d8c804855c40ca79e5524"
   },
   "frontend/src/pages/GDXacNhanThanhToan.tsx": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.1542668,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.686943,
     "ast_hash": "11f05f7b5979aea7220f02fde2908222",
     "semantic_hash": "11f05f7b5979aea7220f02fde2908222"
   },
   "frontend/src/types.ts": {
-    "mtime": 1794370255.227181,
-    "seen": 1794370511.1542675,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.686945,
     "ast_hash": "71dd7de6d897249367405da48ce72a3e",
     "semantic_hash": ""
   },
   "frontend/src/ui/PasswordInput.tsx": {
-    "mtime": 1794370255.2431822,
-    "seen": 1794370511.1542697,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6869495,
     "ast_hash": "8978fee637078b71b9691b1fcc9d2939",
     "semantic_hash": "8978fee637078b71b9691b1fcc9d2939"
   },
   "frontend/src/ui/Preview.tsx": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.1542704,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.6869516,
     "ast_hash": "8625678ed5d3abf2cf7567832781105c",
     "semantic_hash": ""
   },
   "frontend/src/ui/ScrollbarAutohide.tsx": {
-    "mtime": 1794370255.2071795,
-    "seen": 1794370511.1542718,
+    "mtime": 1794386019.4733045,
+    "seen": 1794387207.686954,
     "ast_hash": "545fed9536f45371ac8204e31f2f88dc",
     "semantic_hash": "545fed9536f45371ac8204e31f2f88dc"
   },
   "frontend/src/ui/SiteLayout.tsx": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.1542728,
+    "mtime": 1794386019.4813046,
+    "seen": 1794387207.686956,
     "ast_hash": "e9a2016a6e6aa9684fda2f3b5aa36f63",
     "semantic_hash": "e9a2016a6e6aa9684fda2f3b5aa36f63"
   },
   "frontend/src/ui/common.tsx": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.1542737,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.686958,
     "ast_hash": "f3a130bdeb7dd6283902780a7115c8b1",
     "semantic_hash": "f3a130bdeb7dd6283902780a7115c8b1"
   },
   "frontend/src/ui/fixtures.ts": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542747,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.6869607,
     "ast_hash": "fe452db7eab4c6640344e3e7e52a6430",
     "semantic_hash": ""
   },
   "frontend/src/ui/models.ts": {
-    "mtime": 1794370255.239658,
-    "seen": 1794370511.154276,
+    "mtime": 1794386019.445304,
+    "seen": 1794387207.6869624,
     "ast_hash": "53dc549b8489ff93985926f5f399fbcd",
     "semantic_hash": ""
   },
   "frontend/src/utils.ts": {
-    "mtime": 1794370255.2459848,
-    "seen": 1794370511.1542768,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6869645,
     "ast_hash": "f89a31f7f0d83346061c750e161bd603",
     "semantic_hash": "f89a31f7f0d83346061c750e161bd603"
   },
   "frontend/tsconfig.json": {
-    "mtime": 1794370255.2511828,
-    "seen": 1794370511.1542778,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6869664,
     "ast_hash": "992d05bd9dba05d1d5e4628b3361a15f",
     "semantic_hash": "992d05bd9dba05d1d5e4628b3361a15f"
   },
   "frontend/vite.config.ts": {
-    "mtime": 1794370255.2551832,
-    "seen": 1794370511.154279,
+    "mtime": 1794386019.4613042,
+    "seen": 1794387207.6869683,
     "ast_hash": "f5eabe54664b1da903711b85fac3847f",
     "semantic_hash": "f5eabe54664b1da903711b85fac3847f"
   },
   "scripts/agent-commit.sh": {
-    "mtime": 1794370255.2459848,
-    "seen": 1794370511.1542802,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6869698,
     "ast_hash": "cb5561449e315a9f658532ccf7a40a4a",
     "semantic_hash": "cb5561449e315a9f658532ccf7a40a4a"
   },
   "scripts/agent-commit.test.ts": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.154281,
+    "mtime": 1794386019.4653044,
+    "seen": 1794387207.6869717,
     "ast_hash": "09e453e7867b2e752c9829c85917869f",
     "semantic_hash": "09e453e7867b2e752c9829c85917869f"
   },
   "AGENTS.md": {
-    "mtime": 1794370885.47979,
-    "seen": 1794371055.4497867,
-    "ast_hash": "0085b32846e1e9917b3586dbafa9aede",
+    "mtime": 1794386440.7050347,
+    "seen": 1794387207.6869779,
+    "ast_hash": "614535c3971b60552d32141b07304cdd",
     "semantic_hash": ""
   },
   "ARCHITECTURE.md": {
-    "mtime": 1794370993.232593,
-    "seen": 1794371055.4497876,
-    "ast_hash": "3191a341ffac7283dbd11dad0910a728",
+    "mtime": 1794386433.6722178,
+    "seen": 1794387207.6869798,
+    "ast_hash": "753a0329d938c5037b748c97d2545175",
     "semantic_hash": ""
   },
   "GLOSSARY.md": {
-    "mtime": 1794370572.9195158,
-    "seen": 1794370593.4737244,
+    "mtime": 1794386019.4773045,
+    "seen": 1794387207.6869843,
     "ast_hash": "42d2d9ac0674e1c4607d38b2463a5970",
     "semantic_hash": "42d2d9ac0674e1c4607d38b2463a5970"
   },
   "frontend/index.html": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542892,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6869924,
     "ast_hash": "84b63ae058d24579562defe6ab7f5235",
     "semantic_hash": "84b63ae058d24579562defe6ab7f5235"
   },
   "specs.md": {
-    "mtime": 1794370861.103388,
-    "seen": 1794371055.449797,
-    "ast_hash": "40ea38a78e66009fbac45de2a5058bce",
+    "mtime": 1794386466.882318,
+    "seen": 1794387207.687,
+    "ast_hash": "767518b12ffbc2ec3b81bc7b3c7ee9a4",
     "semantic_hash": ""
   },
   "frontend/public/ticket-demo.svg": {
-    "mtime": 1794370255.2031791,
-    "seen": 1794370511.1542976,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6870143,
     "ast_hash": "11f1750e6eca1e8c1e646a500733e19a",
     "semantic_hash": "11f1750e6eca1e8c1e646a500733e19a"
   },
   "backend/src/main/resources/repair-unicode.sql": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.1542416,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.686889,
     "ast_hash": "589f18b1221792f6e814fd740cd8df33",
     "semantic_hash": ""
   },
   "backend/src/test/java/com/cineman/UnicodeRepairIntegrationTest.java": {
-    "mtime": 1794370255.2186427,
-    "seen": 1794370511.1542463,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.686901,
     "ast_hash": "350c76d36cf6f7b817f05c7f2f85c1af",
     "semantic_hash": ""
   },
   "frontend/scripts/gen-hall-scene.mjs": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.1542497,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6869066,
     "ast_hash": "ed2c4e6785b8b1265f3cd8581b51e50d",
     "semantic_hash": ""
   },
   "frontend/src/ui/HallScene.tsx": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542687,
+    "mtime": 1794386019.4573042,
+    "seen": 1794387207.6869473,
     "ast_hash": "468e784f7478ac620962182f51541054",
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1794370255.2231808,
-    "seen": 1794370511.1542845,
+    "mtime": 1794386019.4693043,
+    "seen": 1794387207.6869822,
     "ast_hash": "e34d26dc970eeebb1f58652b0306d104",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542869,
+    "mtime": 1794386019.4253037,
+    "seen": 1794387207.6869867,
     "ast_hash": "04bf5395fd2be741dcb5a09451a8b883",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794371081.236019,
-    "seen": 1794371082.461923,
+    "mtime": 1794386019.4293036,
+    "seen": 1794387207.686989,
     "ast_hash": "ec75b41d19b7ab2f463f50cc3413ae30",
     "semantic_hash": ""
   },
   "diagrams/out/dao-dat-ve-theo-so-do.svg": {
-    "mtime": 1794370255.2311814,
-    "seen": 1794370511.1542912,
+    "mtime": 1794386019.4813046,
+    "seen": 1794387207.6870031,
     "ast_hash": "c918d39e7b219fa13a87450c77c881bb",
     "semantic_hash": ""
   },
   "diagrams/out/hinh-3-22-hoat-dong-doi-diem.png": {
-    "mtime": 1794370255.2471826,
-    "seen": 1794370511.1542919,
+    "mtime": 1794386019.4853046,
+    "seen": 1794387207.6870058,
     "ast_hash": "00d9ad23191e272155423e789fffe04b",
     "semantic_hash": ""
   },
   "diagrams/out/hinh-3-22-hoat-dong-doi-diem.svg": {
-    "mtime": 1794370255.2511828,
-    "seen": 1794370511.1542945,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.687008,
     "ast_hash": "02f13a35b8a7b5fa32293ae7ece5663b",
     "semantic_hash": ""
   },
   "diagrams/out/hinh-3-25-tuan-tu-doi-diem.png": {
-    "mtime": 1794370255.1911783,
-    "seen": 1794370511.1542954,
+    "mtime": 1794386019.4417331,
+    "seen": 1794387207.6870096,
     "ast_hash": "76f6bf71ee27bf3caea3928f275ca7df",
     "semantic_hash": ""
   },
   "diagrams/out/hinh-3-25-tuan-tu-doi-diem.svg": {
-    "mtime": 1794370255.199179,
-    "seen": 1794370511.1542966,
+    "mtime": 1794386019.449304,
+    "seen": 1794387207.6870124,
     "ast_hash": "eede8d5a4c41d7b72d320972fa8ed729",
     "semantic_hash": ""
   },
   "frontend/src/assets/hall-scene.svg": {
-    "mtime": 1794370255.2351816,
-    "seen": 1794370511.1542983,
+    "mtime": 1794386019.4773045,
+    "seen": 1794387207.6870165,
     "ast_hash": "5f74dc3e925da4abdb18cf78a6948d7f",
     "semantic_hash": ""
   },
   ".github/workflows/graph-fresh.yml": {
-    "mtime": 1794370573.2549736,
-    "seen": 1794370593.473614,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.686801,
     "ast_hash": "eb0ab837be2c288234f163c9bed121e0",
     "semantic_hash": ""
   },
   "scripts/check-graphify.py": {
-    "mtime": 1794370565.327349,
-    "seen": 1794370593.4737182,
+    "mtime": 1794386019.4733045,
+    "seen": 1794387207.6869733,
     "ast_hash": "e678cc5b35c743820f328011229066c8",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1794370896.0443687,
-    "seen": 1794371055.4496856,
+    "mtime": 1794386019.4333038,
+    "seen": 1794387207.6867955,
     "ast_hash": "87a54a1a8281f96286da1573df0f42d6",
     "semantic_hash": ""
   },
   "backend/src/test/java/com/cineman/ArchitectureInvariantTest.java": {
-    "mtime": 1794370954.113712,
-    "seen": 1794371055.4497411,
-    "ast_hash": "de8b09002d3af84997e045dc505507fa",
+    "mtime": 1794386466.9263313,
+    "seen": 1794387207.6868932,
+    "ast_hash": "4959c8967bea9e124e470ed12028e5d2",
     "semantic_hash": ""
   },
   "scripts/check-md-links.py": {
-    "mtime": 1794370803.1665206,
-    "seen": 1794371055.4497852,
+    "mtime": 1794386019.4773045,
+    "seen": 1794387207.6869755,
     "ast_hash": "1cb3576bcf9ca25a0ce8d19059e64da6",
     "semantic_hash": ""
   },
   "scripts/README.md": {
-    "mtime": 1794370885.46955,
-    "seen": 1794371055.4497957,
-    "ast_hash": "229910dd11596bcd939bd366a0fd89d8",
+    "mtime": 1794386466.942336,
+    "seen": 1794387207.686997,
+    "ast_hash": "555c373169877ae94ac2cc98aff7a8c0",
+    "semantic_hash": ""
+  },
+  "backend/src/main/java/com/cineman/controller/RESTController.java": {
+    "mtime": 1794386542.5725136,
+    "seen": 1794387207.6868117,
+    "ast_hash": "6ce0e51cba598c485025c64141541b71",
     "semantic_hash": ""
   },
   "frontend/package-lock.json": {
-    "mtime": 1794370255.187178,
-    "seen": 1794370511.1542995,
+    "mtime": 1794386019.4373038,
+    "seen": 1794387207.6870182,
     "ast_hash": "dc6c05eea1aeaf09070ea9afc945accb",
     "semantic_hash": ""
   }
