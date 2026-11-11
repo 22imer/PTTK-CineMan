@@ -38,3 +38,9 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: bun test
         run: bun test scripts/
+  doc-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: tham chiếu trong *.md
+        run: python3 scripts/check-md-links.py
