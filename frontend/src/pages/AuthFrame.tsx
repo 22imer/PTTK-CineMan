@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import HallScene from '../ui/HallScene';
 
 interface AuthFrameProps {
   heading: string;
@@ -16,6 +17,7 @@ export default function AuthFrame({ heading, description, children }: AuthFrameP
           <p className="page-subtitle">{description}</p>
         </div>
       </header>
+      {heading !== 'Đăng ký thành viên' && <HallScene />}
       {children}
     </section>
   );
