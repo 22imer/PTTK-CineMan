@@ -96,8 +96,7 @@ Controller là Spring `@RestController` (3 controller nghiệp vụ). Frontend k
 | `KhachHangDAO` | `taoHoSo(kh : KhachHang) : boolean`, `kiemTraDiem(maKhachHang : String, diem : int) : boolean`, `truDiem(maKhachHang : String, diem : int) : boolean`, `congDiem(maKhachHang : String, diem : int) : boolean`, `layTheoId(id : int) : KhachHang`, `khoaTheoId(id : int) : KhachHang` (đọc/khóa hồ sơ không mật khẩu) |
 | `PhimDAO` / `KhungGioDAO` | `laydsPhim() : List<Phim>`, `laydsKhungGio() : List<KhungGio>` |
 | `SuatChieuDAO` | `laydsSuatChieu(idPhim : int, ngayChieu : Date, idKhungGio : int) : List<SuatChieu>`, `layTheoId(id : int) : SuatChieu`, `khoaTheoId(id : int) : SuatChieu` |
-| `GheDAO` | `laydsGhe(idSuatChieu : int) : List<Ghe>` |
-| `VeDAO` | `laydsVeConHieuLuc(suatChieu) : List<Ve>`, `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`, `tinhTienVe(suatChieu : SuatChieu, ghe : Ghe) : Ve` (= `giaCoSo + phuThu`, tạo đối tượng `Ve`), `capNhatTrangThaiVe(idHoaDon : int, trangThai : String) : boolean`, `huyVe(idVe : int)` |
+| `VeDAO` | `laydsGhe(idSuatChieu : int) : List<Ghe>` (toàn bộ ghế phòng của suất, kể cả ghế chưa có vé), `laydsVeConHieuLuc(suatChieu) : List<Ve>`, `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`, `tinhTienVe(suatChieu : SuatChieu, ghe : Ghe) : Ve` (= `giaCoSo + phuThu`, tạo đối tượng `Ve`), `capNhatTrangThaiVe(idHoaDon : int, trangThai : String) : boolean`, `huyVe(idVe : int)` |
 | `HoaDonDAO` | `taoHoaDon(hd : HoaDon, dsVe : List<Ve>) : HoaDon` (1 giao dịch: kiểm tra `(suất,ghế)` + lưu HoaDon + Ve), `tinhTongTien(dsVe : List<Ve>) : int`, `tinhTongTien(dsVe, voucher) : int` (1 hàm, voucher optional — **bỏ** `capNhatTongTien`), `kiemTraHetHan(idHoaDon : int)`, `xacNhanThanhToan(idHoaDon : int)`, `huyHoaDon(idHoaDon : int)` — **bỏ** `timHoaDonTheoIdVe`, bỏ `phatHanhVe` (vé tạo cùng hóa đơn) |
 | `VoucherKhachHangDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`, `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean`, `luuVoucher(vc : VoucherKhachHang) : int`, `layTheoId(id : int) : VoucherKhachHang`, `khoaTheoId(id : int) : VoucherKhachHang` — **bỏ** `taoVoucher()` không tham số |
 | `GiaoDichDoiDiemDAO` | `luuGiaoDich(gd : GiaoDichDoiDiem) : int`, `layLichSuTheoKhachHang(idKhachHang : int) : List<VoucherKhachHang>` |
@@ -118,11 +117,10 @@ tồn kho từ các hàng vừa khóa, tránh đọc lại snapshot cũ khi có 
 ### 5.1. Thiết kế DAO đặt vé theo sơ đồ
 
 **Phạm vi:** bản thiết kế trình bày theo ảnh lớp DAO đã chốt, không thay thế hợp đồng triển khai ở đầu §5.
-Chỉ hiển thị lớp cha `DAO` và 8 DAO con phục vụ đặt vé. Theo điều chỉnh sau khi chốt ảnh,
-không có lớp `GheDAO` trong thiết kế; chuyển trách nhiệm `laydsGhe(idSuatChieu) : List<Ghe>` sang `VeDAO`.
-Ngoài việc chuyển trách nhiệm này và bổ sung kiểu còn thiếu, giữ các phương thức trong ảnh.
+Chỉ hiển thị lớp cha `DAO` và 8 DAO con phục vụ đặt vé. Truy vấn ghế `laydsGhe(idSuatChieu) : List<Ghe>`
+thuộc `VeDAO`; không có lớp `GheDAO`. Giữ các phương thức trong ảnh, bổ sung kiểu còn thiếu.
 Các DAO/phương thức kỹ thuật không xuất hiện trong hình vẫn tồn tại trong backend.
-Không đổi code, tên lớp Java, API, thực thể, quy tắc R1–R12 hoặc sơ đồ đổi điểm.
+Không đổi API, thực thể, quy tắc R1–R12 hoặc sơ đồ đổi điểm.
 
 Nguồn: [dao-dat-ve-theo-so-do.puml](diagrams/puml/dao-dat-ve-theo-so-do.puml).
 Ảnh render: [dao-dat-ve-theo-so-do.svg](diagrams/out/dao-dat-ve-theo-so-do.svg).
@@ -157,7 +155,6 @@ Không suy ra toàn bộ sơ đồ ghế từ danh sách vé, vì ghế chưa c�
 | `ThanhVienDAO.kiemTraDangNhap(username, password)` | `kiemTraDangNhap(ThanhVien tv)` nhận đối tượng do controller dựng từ thông tin đăng nhập. |
 | `SuatChieuDAO` dùng `Date` | Java dùng `LocalDate` cho ngày chiếu theo quy ước kiểu ở §3. |
 | `VeDAO.tinhtienVe(...): int` | `tinhTienVe(...): Ve` tạo đối tượng vé chưa lưu; giá nằm ở `Ve.giaVe`. |
-| `VeDAO.laydsGhe(idSuatChieu)` | Trách nhiệm ghế được chuyển sang `VeDAO` trong thiết kế; Java hiện vẫn dùng `GheDAO.laydsGhe(idSuatChieu)`, chưa chuyển code trong bước này. |
 | `VeDAO.laydsVe(idSuatChieu)` | `laydsVeConHieuLuc(SuatChieu)` đọc vé đang giữ/đã bán; không thay thế truy vấn danh sách ghế đầy đủ. |
 | `VeDAO.phatHanhVe(idHoaDon)` | `capNhatTrangThaiVe(idHoaDon, DA_BAN)` trong giao dịch xác nhận thanh toán; không gọi bán vé lần nữa sau khi giao dịch đã hoàn tất. |
 | `HoaDonDAO.taoHoaDon()` | Chữ ký trình bày rút gọn của `taoHoaDon(hd, dsVe)`; dữ liệu khách hàng và vé phải được truyền tường minh khi triển khai. |
@@ -338,7 +335,7 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │       ├── java/com/cineman/
 │       │   ├── controller/       # DangKyController, DatVeController, DoiDiemController
 │       │   ├── dao/              # DAO + ThanhVienDAO, KhachHangDAO, PhimDAO, KhungGioDAO,
-│       │   │                     # SuatChieuDAO, GheDAO, VeDAO, HoaDonDAO,
+│       │   │                     # SuatChieuDAO, VeDAO, HoaDonDAO,
 │       │   │                     # VoucherKhachHangDAO, GiaoDichDoiDiemDAO, QuaTangDAO
 │       │   └── entity/           # ThanhVien, KhachHang, Phim, KhungGio, PhongChieu, SuatChieu,
 │       │                         # LoaiGhe, Ghe, Ve, HoaDon, QuaTang (+3 lớp con), VoucherKhachHang,
