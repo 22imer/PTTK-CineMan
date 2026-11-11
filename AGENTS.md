@@ -46,6 +46,7 @@ Khi gặp: ghi rõ chỗ cần quyết, không hard-code ngầm.
 2. Khi cần sửa spec: sửa `ARCHITECTURE.md` trước, code theo sau; không sửa `../bc.docx`.
 3. Mọi thay đổi bảng/lớp/DAO phải cập nhật `ARCHITECTURE.md` §3–§5 trong cùng commit.
 4. Test bằng seed `ARCHITECTURE.md` §8 (PH01, SC03 27/09/2026, PT02 100 điểm, `VC-VIDU-12345`, Nguyễn Văn A 250 điểm).
+5. Quan hệ giữa class/DAO/trang (ai gọi ai, thay đổi này chạm đâu): `graphify query "<câu hỏi>"` trước (đồ thị ở `graphify-out/`), rồi xác nhận bằng `grep`/`read`. Sửa code xong chạy `graphify update .` và commit `graphify-out/` cùng thay đổi — hook git của graphify không chạy trong worktree, CI `graph-fresh` chặn nếu đồ thị lệch.
 
 ## 5. Lệnh làm việc
 

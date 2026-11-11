@@ -1,0 +1,12 @@
+name: Graph fresh
+# Chặn PR để graphify-out/ lệch so với code. Sửa: `graphify update .` rồi commit graphify-out/.
+on:
+  pull_request:
+    branches: [dev, main]
+jobs:
+  graph-fresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: graphify-out khớp manifest
+        run: python3 scripts/check-graphify.py

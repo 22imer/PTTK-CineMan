@@ -1,0 +1,7 @@
+# graphify: cache và sản phẩm cục bộ; graph.json, manifest.json, GRAPH_REPORT.md, graph.html vẫn commit
+graphify-out/cache/
+graphify-out/20*/
+graphify-out/.graphify_build_state.json
+graphify-out/.graphify_labels.pending.json
+graphify-out/.graphify_labels.json.sig
+graphify-out/.graphify_root
