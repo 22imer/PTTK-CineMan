@@ -1,8 +1,8 @@
 # CineMan — ARCHITECTURE
 
 Hệ thống quản lý rạp chiếu phim — Module M1 (đăng ký thành viên, đặt vé trực tuyến, đổi điểm thưởng).
-Nguồn đặc tả: `../bc.docx` (§1–§11) + quyết định nhóm theo `../phase/quy-uoc-phan-tich.md` (R1–R12)
-+ `../phase/quy-uoc-thiet-ke.md` + `../phase/nhan-xet-thiet-ke.md` §3 (8 quyết định _fix, 28/10/2026).
+Nguồn gốc nằm ngoài repo, không có sẵn (file này là chuẩn): `../bc.docx` (§1–§11) + quyết định nhóm theo
+`../phase/quy-uoc-phan-tich.md` (R1–R12) + `../phase/quy-uoc-thiet-ke.md` + `../phase/nhan-xet-thiet-ke.md` §3 (8 quyết định _fix, 28/10/2026).
 File này là shared understanding đã chốt (Q1–Q11) — implement đúng như mô tả, không tự thêm/bớt nghiệp vụ.
 
 ## 1. Quyết định đã chốt (Q1–Q11)
@@ -174,7 +174,7 @@ Mock thanh toán thất bại vẫn giữ hóa đơn chờ để thử lại tro
 
 ## 6. Frontend — 12 trang React
 
-Theo sơ đồ trạng thái `bc.docx` §4 + `diagrams/puml/hinh-3-20/21/22_*_fix.puml`:
+Theo sơ đồ trạng thái `bc.docx` §4 và sơ đồ hoạt động hình 3-20/21/22 bản `_fix` (cả hai ngoài repo):
 
 ```text
 DangNhap → GDDangKyTaiKhoan                       (đăng ký)
@@ -353,7 +353,7 @@ Mỗi cảnh chọn trạng thái mẫu của chính cảnh đó (có dữ liệ
 
 ## 10. Diagrams
 
-Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md`
+Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md` (ngoài repo)
 (`VeDAO.kiemTraVe`, `taoHoaDon(hd, dsVe)`, ghi phiếu trước voucher, tách 3.24 a/b/c).
 Nguồn sơ đồ đổi điểm ở `diagrams/puml/hinh-3-22-hoat-dong-doi-diem.puml` và
 `diagrams/puml/hinh-3-25-tuan-tu-doi-diem.puml` đã bổ sung lịch sử theo issue #13;
@@ -425,7 +425,7 @@ Image frontend `node:24-alpine` — Node 24 thỏa `engines` của Vite 8 và `@
 
 - `hangThanhVien` đổi theo `tongDiem` ở ngưỡng nào — bc chưa định nghĩa → giữ String, không suy diễn.
 - Chi tiết cổng thanh toán thật (Q10 chỉ mock) — để pha Cài đặt.
-- Actor Cổng thanh toán không thêm (theo `requirement.md`).
+- Actor Cổng thanh toán không thêm (theo `requirement.md`, ngoài repo).
 
 ## 13. Shared understanding (tổng hợp từ grilling Q1–Q11)
 
