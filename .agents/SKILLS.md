@@ -1,7 +1,7 @@
 # SKILLS.md — Skills đã dùng trong dự án CineMan (PTTK-Project)
 
 Tổng hợp từ transcript phiên omp của các worktree `PTTK-Project/*` và thư mục gốc `PTTK2`, `PTTK3`, `PTTK-Project`
-(49 phiên, 21/09/2026 → 11/11/2026). Chỉ tính **skill thực sự được agent đọc** (`read skill://<tên>` hoặc `SKILL.md`),
+(49 phiên, 21/09/2026 → 11/11/2026). Chỉ tính **skill thực sự được agent đọc** (`read skill://<tên>` hoặc đọc file hướng dẫn của skill),
 không tính skill chỉ xuất hiện trong danh sách có sẵn. Cột "Phiên" = số phiên đã đọc skill đó (30/49 phiên có dùng skill).
 
 Quy ước dự án vẫn lấy từ `AGENTS.md` và `ARCHITECTURE.md`; file này chỉ là chỉ mục để biết **khi nào gọi skill nào**.
@@ -41,7 +41,7 @@ Quy ước dự án vẫn lấy từ `AGENTS.md` và `ARCHITECTURE.md`; file nà
 
 | Skill | Phiên | Dùng để làm gì |
 | --- | --- | --- |
-| `ui-ux` | 5 | Dựng 12 trang `GD*.tsx` từ `UI.md`, kiểm tra theo checklist |
+| `ui-ux` | 5 | Dựng 12 trang `GD*.tsx` từ bản mô tả giao diện (UI) cục bộ, kiểm tra theo checklist |
 | `agent-browser` | 8 | Chạy thử giao diện thật (Docker `:5173`), chụp màn hình, kiểm tra kịch bản |
 | `frontend-design` | 2 | Giao diện pixel-art 16-bit sảnh rạp (PR #32) |
 | `impeccable` | 1 | Được yêu cầu cho redesign pixel-art nhưng không có trong danh sách khi đó; thay bằng `frontend-design` + `ui-ux` |
