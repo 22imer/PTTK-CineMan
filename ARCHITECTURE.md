@@ -5,6 +5,8 @@ Nguồn gốc nằm ngoài repo, không có sẵn (file này là chuẩn): `../b
 `../phase/quy-uoc-phan-tich.md` (R1–R12) + `../phase/quy-uoc-thiet-ke.md` + `../phase/nhan-xet-thiet-ke.md` §3 (8 quyết định _fix, 28/10/2026).
 File này là shared understanding đã chốt (Q1–Q11) — implement đúng như mô tả, không tự thêm/bớt nghiệp vụ.
 
+**Mục lục:** §1 Quyết định · §2 Tổng quan · §3 Dữ liệu · §4 Luật R1–R12 · §5 Backend (§5.1 DAO đặt vé) · §6 Frontend · §7 REST API · §8 Seed · §9 Thư mục · §10 Diagrams · §11 Chạy & build · §12 Điểm còn mở
+
 ## 1. Quyết định đã chốt (Q1–Q11)
 
 | # | Quyết định | Hệ quả |
@@ -12,13 +14,15 @@ File này là shared understanding đã chốt (Q1–Q11) — implement đúng n
 | Q1 | Frontend **React + Vite + TypeScript** (thay Thymeleaf) | 12 trang `GD*.tsx`; bỏ Thymeleaf/JSP; gọi API qua `HTTPClient.fetch()` |
 | Q2 | Backend **Java Spring Boot REST + DAO** | 3 `@RestController` nghiệp vụ (`DangKy`/`DatVe`/`DoiDiemController`) + DAO (JdbcTemplate), entity là POJO (không JPA) |
 | Q3 | **Thêm `GiaoDichDoiDiem`** (phiếu PDT-001) | `VoucherKhachHang` chứa `giaoDichDoiDiem`; bỏ `khachHang/quaTang` trên voucher; **ghi phiếu trước → tạo voucher sau**, 1 transaction `thucHienDoiDiem` |
-| Q4 | Giữ **3 lớp con `QuaTang`** | 1 bảng `tblQuaTang` chứa `loaiQua` + `giaTriGiam` (NULL với vé/bắp nước); 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` vẫn bắt buộc |
+| Q4 | Giữ **3 lớp con `QuaTang`** | 1 bảng `tblQuaTang` chứa `loaiQua` + `giaTriGiam` (NULL với vé/bắp nước), bỏ bảng tách `tblVoucherGiamGia` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026); 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` vẫn bắt buộc |
 | Q5–Q6 | Chốt **R1–R12** | Xem §4; không còn mục "chưa chốt" |
-| Q7 | Schema **13 bảng**, **14 khóa ngoại** | `tblXId` cho khóa ngoại; kiểm tra trùng `(suatChieu,ghe)` ở app-level |
+| Q7 | Schema **13 bảng**, **14 khóa ngoại** ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | `tblXId` cho khóa ngoại; kiểm tra trùng `(suatChieu,ghe)` ở app-level |
 | Q8 | **12 trang `*.tsx`** | `DangNhap` tách riêng; giữ thuộc tính `in/out/sub`; session ẩn `kh, phim, sc, hoaDon…` |
 | Q9 | Backend **Java Spring Boot** | Chữ ký DAO theo `_fix` (§5); mật khẩu băm BCrypt |
 | Q10 | Session mock + cổng thanh toán mock | `HttpSession`; cổng trả redirect mock; không thêm actor Cổng thanh toán |
 | Q11 | Diagrams `_fix` + seed + docker | Tên/chữ ký theo bản _fix; seed mốc 27/09/2026; `docker-compose.yml` ở gốc repo |
+
+Nếu đổi quyết định, sửa mục liên quan trong cùng commit.
 
 ## 2. Tổng quan
 
@@ -426,20 +430,3 @@ Image frontend `node:24-alpine` — Node 24 thỏa `engines` của Vite 8 và `@
 - `hangThanhVien` đổi theo `tongDiem` ở ngưỡng nào — bc chưa định nghĩa → giữ String, không suy diễn.
 - Chi tiết cổng thanh toán thật (Q10 chỉ mock) — để pha Cài đặt.
 - Actor Cổng thanh toán không thêm (theo `requirement.md`, ngoài repo).
-
-## 13. Shared understanding (tổng hợp từ grilling Q1–Q11)
-
-| Q | Quyết định | Trạng thái |
-| :--- | :--- | :--- |
-| Q1 | Frontend React (thay Thymeleaf) | ✅ chốt |
-| Q2 | Backend REST + DAO (3 controller nghiệp vụ) | ✅ chốt |
-| Q3 | Thêm `GiaoDichDoiDiem`, ghi phiếu trước voucher | ✅ chốt |
-| Q4 | Giữ 3 lớp con `QuaTang`; 1 bảng `tblQuaTang` (`loaiQua` + `giaTriGiam`), bỏ bảng tách `tblVoucherGiamGia` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | ✅ chốt |
-| Q5–Q6 | Chốt R1–R12 | ✅ chốt |
-| Q7 | Schema 13 bảng / 14 khóa ngoại, FK `tblXId` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | ✅ chốt |
-| Q8 | 12 trang `GD*.tsx` | ✅ chốt |
-| Q9 | Java Spring Boot, DAO chữ ký _fix | ✅ chốt |
-| Q10 | Session mock + cổng mock | ✅ chốt |
-| Q11 | Diagrams _fix + seed + docker | ✅ chốt |
-
-Chi tiết mục 10–12 đã được gộp vào file này; nếu đổi quyết định, sửa mục liên quan trong cùng commit.
