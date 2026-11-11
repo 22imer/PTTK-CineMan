@@ -1,1 +1,23 @@
-{"0": "Application Screens and Preview", "1": "Backend Integration Tests", "2": "Booking Controllers and Customers", "3": "Business Contracts and Vocabulary", "4": "Member Authentication and Passwords", "5": "Registration and HTTP Client", "6": "Docker Service Configuration", "7": "Frontend Dependencies and Scripts", "8": "Seats and Seat Types", "9": "Invoice Transactions and Payments", "10": "Gift Catalog and Inventory", "11": "Checkpoint Hook Test Harness", "12": "Customer Voucher Lifecycle", "13": "TypeScript Compiler Configuration", "14": "Movie Entity Fields", "15": "DAO Mapping and Repositories", "16": "JDBC Persistence and Injection", "17": "Ticket Creation and Storage", "18": "Screenings and Schedule Data", "19": "Agent Checkpoint Hook", "20": "Point Redemption Receipts", "21": "Persistence Imports and Utilities", "22": "Gift Voucher Variants", "23": "MySQL Tables and Constraints", "24": "Invoice Entity Fields", "25": "Cinema Rooms and Seating", "26": "Time Slot Entity Fields", "27": "Branch Flow Automation", "28": "Invoice Operation Statuses", "29": "Checkpoint Git Test Helpers", "30": "Demo Ticket QR Payload", "31": "Git State Test Helpers", "32": "Time Slot Query DAO", "33": "Scoped Checkpoint Shell Script", "34": "Checkpoint Stop Event Tests", "35": "SQL Seed Data File", "36": "Backend Maven Coordinate"}
+{
+  "1": "Backend Integration Tests",
+  "3": "Business Contracts and Vocabulary",
+  "4": "Member Authentication and Passwords",
+  "5": "Registration and HTTP Client",
+  "6": "Docker Service Configuration",
+  "7": "Frontend Dependencies and Scripts",
+  "10": "Gift Catalog and Inventory",
+  "11": "Checkpoint Hook Test Harness",
+  "12": "Customer Voucher Lifecycle",
+  "13": "TypeScript Compiler Configuration",
+  "14": "Movie Entity Fields",
+  "21": "Persistence Imports and Utilities",
+  "23": "MySQL Tables and Constraints",
+  "24": "Invoice Entity Fields",
+  "25": "Cinema Rooms and Seating",
+  "26": "Time Slot Entity Fields",
+  "27": "Branch Flow Automation",
+  "30": "Demo Ticket QR Payload",
+  "33": "Scoped Checkpoint Shell Script",
+  "35": "SQL Seed Data File",
+  "36": "Backend Maven Coordinate"
+}

@@ -1,36 +1,40 @@
 # CineMan — ARCHITECTURE
 
 Hệ thống quản lý rạp chiếu phim — Module M1 (đăng ký thành viên, đặt vé trực tuyến, đổi điểm thưởng).
-Nguồn đặc tả: `../bc.docx` (§1–§11) + quyết định nhóm theo `../phase/quy-uoc-phan-tich.md` (R1–R12)
-+ `../phase/quy-uoc-thiet-ke.md` + `../phase/nhan-xet-thiet-ke.md` §3 (8 quyết định _fix, 28/10/2026).
+Nguồn gốc nằm ngoài repo, không có sẵn (file này là chuẩn): `../bc.docx` (§1–§11) + quyết định nhóm theo
+`../phase/quy-uoc-phan-tich.md` (R1–R12) + `../phase/quy-uoc-thiet-ke.md` + `../phase/nhan-xet-thiet-ke.md` §3 (8 quyết định _fix, 28/10/2026).
 File này là shared understanding đã chốt (Q1–Q11) — implement đúng như mô tả, không tự thêm/bớt nghiệp vụ.
+
+**Mục lục:** §1 Quyết định · §2 Tổng quan · §3 Dữ liệu · §4 Luật R1–R12 · §5 Backend (§5.1 DAO đặt vé) · §6 Frontend · §7 REST API · §8 Seed · §9 Thư mục · §10 Diagrams · §11 Chạy & build · §12 Điểm còn mở
 
 ## 1. Quyết định đã chốt (Q1–Q11)
 
 | # | Quyết định | Hệ quả |
 | :--- | :--- | :--- |
 | Q1 | Frontend **React + Vite + TypeScript** (thay Thymeleaf) | 12 trang `GD*.tsx`; bỏ Thymeleaf/JSP; gọi API qua `HTTPClient.fetch()` |
-| Q2 | Backend **Java Spring Boot REST + DAO** | 3 `@RestController` nghiệp vụ (`DangKy`/`DatVe`/`DoiDiemController`) + DAO (JdbcTemplate), entity là POJO (không JPA) |
+| Q2 | Backend **Java Spring Boot REST + DAO** | 1 `@RestController` duy nhất `RESTController` (gộp 3 nhóm Auth/Booking/Reward từ `DangKy`/`DatVe`/`DoiDiemController`, sửa 11/11/2026) + DAO (JdbcTemplate), entity là POJO (không JPA); `HTTPClient` chỉ ở frontend |
 | Q3 | **Thêm `GiaoDichDoiDiem`** (phiếu PDT-001) | `VoucherKhachHang` chứa `giaoDichDoiDiem`; bỏ `khachHang/quaTang` trên voucher; **ghi phiếu trước → tạo voucher sau**, 1 transaction `thucHienDoiDiem` |
-| Q4 | Giữ **3 lớp con `QuaTang`** | 1 bảng `tblQuaTang` chứa `loaiQua` + `giaTriGiam` (NULL với vé/bắp nước); 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` vẫn bắt buộc |
+| Q4 | Giữ **3 lớp con `QuaTang`** | 1 bảng `tblQuaTang` chứa `loaiQua` + `giaTriGiam` (NULL với vé/bắp nước), bỏ bảng tách `tblVoucherGiamGia` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026); 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` vẫn bắt buộc |
 | Q5–Q6 | Chốt **R1–R12** | Xem §4; không còn mục "chưa chốt" |
-| Q7 | Schema **13 bảng**, **14 khóa ngoại** | `tblXId` cho khóa ngoại; kiểm tra trùng `(suatChieu,ghe)` ở app-level |
+| Q7 | Schema **13 bảng**, **14 khóa ngoại** ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | `tblXId` cho khóa ngoại; kiểm tra trùng `(suatChieu,ghe)` ở app-level |
 | Q8 | **12 trang `*.tsx`** | `DangNhap` tách riêng; giữ thuộc tính `in/out/sub`; session ẩn `kh, phim, sc, hoaDon…` |
 | Q9 | Backend **Java Spring Boot** | Chữ ký DAO theo `_fix` (§5); mật khẩu băm BCrypt |
 | Q10 | Session mock + cổng thanh toán mock | `HttpSession`; cổng trả redirect mock; không thêm actor Cổng thanh toán |
 | Q11 | Diagrams `_fix` + seed + docker | Tên/chữ ký theo bản _fix; seed mốc 27/09/2026; `docker-compose.yml` ở gốc repo |
 
+Nếu đổi quyết định, sửa mục liên quan trong cùng commit.
+
 ## 2. Tổng quan
 
 ```text
 Browser (React TSX) ── fetch (HTTPClient) ──▶ Spring REST ──▶ DAO (JdbcTemplate) ──▶ MySQL
-                                                (3 Controller)    (Connection chung)
+                                                (RESTController)  (Connection chung)
 ```
 
 | Tầng | Công nghệ | Vai trò |
 | :--- | :--- | :--- |
 | Frontend | TypeScript + React + Vite | 12 trang `GD*.tsx` (§6), gọi API qua `HTTPClient.fetch()` |
-| Backend | Java Spring Boot (REST) | 3 controller nghiệp vụ → DAO |
+| Backend | Java Spring Boot (REST) | 1 `RESTController` → DAO |
 | Database | MySQL | 13 bảng `tbl*` (§3), 14 khóa ngoại `tblXId` |
 
 ## 3. Mô hình dữ liệu (MySQL, 13 bảng, 14 khóa ngoại)
@@ -88,7 +92,7 @@ Ràng buộc trùng `(suất, ghế)`: không hai `Ve` `DANG_GIU`/`DA_BAN` cùng
 ## 5. Backend — Controller + DAO (chữ ký _fix)
 
 Lớp `DAO` là lớp trừu tượng dùng chung kết nối Spring (JdbcTemplate); các `…DAO` kế thừa. Entity là POJO.
-Controller là Spring `@RestController` (3 controller nghiệp vụ). Frontend không chạm DB.
+Controller là một Spring `@RestController` duy nhất tên `RESTController` (package `com.cineman.controller`, chứa 3 nhóm API Auth/Booking/Reward, envelope `ApiResponse` và các record request/response lồng bên trong). Frontend không chạm DB.
 
 | DAO | Phương thức (chữ ký đầy đủ) |
 | :--- | :--- |
@@ -162,7 +166,7 @@ Không suy ra toàn bộ sơ đồ ghế từ danh sách vé, vì ghế chưa c�
 | `VoucherDAO` | Lớp Java vẫn tên `VoucherKhachHangDAO`; không tạo lớp thay thế hoặc alias `VoucherDAO`. |
 
 `taoHoaDon()` và `huyHoaDon()` không có nghĩa là DAO tự đọc session hoặc giữ thuộc tính
-“khách hàng/hóa đơn hiện tại”. `DatVeController` lấy danh tính từ phiên và truyền dữ liệu vào DAO.
+“khách hàng/hóa đơn hiện tại”. `RESTController` lấy danh tính từ phiên và truyền dữ liệu vào DAO.
 Các phương thức khác giữ ý nghĩa ở §5; hình không phải danh mục đầy đủ của backend.
 
 **Ranh giới giao dịch không đổi:** Tiếp tục → tạo hóa đơn + vé `DANG_GIU` trong một transaction.
@@ -174,7 +178,7 @@ Mock thanh toán thất bại vẫn giữ hóa đơn chờ để thử lại tro
 
 ## 6. Frontend — 12 trang React
 
-Theo sơ đồ trạng thái `bc.docx` §4 + `diagrams/puml/hinh-3-20/21/22_*_fix.puml`:
+Theo sơ đồ trạng thái `bc.docx` §4 và sơ đồ hoạt động hình 3-20/21/22 bản `_fix` (cả hai ngoài repo):
 
 ```text
 DangNhap → GDDangKyTaiKhoan                       (đăng ký)
@@ -205,15 +209,17 @@ Session ẩn: `kh`, `phim`, `ngayChieu`, `khungGio`, `sc`, `hoaDon`, `qt`, `vc`.
 
 ## 7. REST API
 
-`HTTPClient.fetch()` ↔ 3 `@RestController`. Đáp ứng JSON `{ success: boolean, data?: T, message?: string }`;
+`HTTPClient.fetch()` ↔ `RESTController` (một `@RestController`, `@RequestMapping("/api")`). Đáp ứng JSON `{ success: boolean, data?: T, message?: string }`;
 lỗi trả `{ success: false, message }` — không stacktrace, không password/hash.
-Ba nhóm API dùng cùng envelope và phiên server; không tin id khách hàng, giá vé, điểm hay hạn giữ ghế do client gửi.
+Ba nhóm API (Auth, Booking, Reward) cùng nằm trong `RESTController`, dùng chung envelope, phiên server và bộ `@ExceptionHandler`
+(JSON hỏng/sai kiểu → 400, tham số sai định dạng → 400, `ResponseStatusException` → đúng mã, lỗi DB/transaction → 500 an toàn);
+không tin id khách hàng, giá vé, điểm hay hạn giữ ghế do client gửi.
 
 | Nhóm | Method & path | Vào | Ra |
 | :--- | :--- | :--- | :--- |
-| Auth (`DangKyController`) | `POST /api/auth/register` | `{ "kh": {…}, "xacNhanMatKhau": "…" }` | HTTP 200 `{ success: true, data: KhachHang, message }` |
+| Auth | `POST /api/auth/register` | `{ "kh": {…}, "xacNhanMatKhau": "…" }` | HTTP 200 `{ success: true, data: KhachHang, message }` |
 | | `POST /api/auth/login` | `{ "username": "…", "password": "…" }` | HTTP 200 `{ success: true, data: KhachHang }` + `HttpSession.khachHangId` |
-| Booking (`DatVeController`) | `GET /api/phim` | — | `List<Phim>` |
+| Booking | `GET /api/phim` | — | `List<Phim>` |
 | | `GET /api/khunggio?phimId=&ngayChieu=` | phim, ngày | `List<KhungGio>` |
 | | `GET /api/suatchieu?phimId=&ngayChieu=&khungGioId=` | ngày/khung giờ optional để liệt kê ngày mở bán | `List<SuatChieu>` |
 | | `GET /api/ghe?suatChieuId=` | — | `{dsGhe, dsVe, suatChieu}`; nhả giữ ghế hết hạn trước khi đọc |
@@ -221,7 +227,7 @@ Ba nhóm API dùng cùng envelope và phiên server; không tin id khách hàng,
 | | `POST /api/hoadon/apdung-voucher` | `{hoaDonId, maVoucher}` | tóm tắt sau giảm, voucher chưa tiêu |
 | | `POST /api/hoadon/{id}/thanh-toan` | `{thanhCong?: boolean}` (mock, mặc định true) | tóm tắt đã thanh toán; false cho thử lại trong hạn |
 | | `DELETE /api/hoadon/{id}` | — | tóm tắt hủy + nhả ghế; không hủy hóa đơn đã thanh toán |
-| Reward (`DoiDiemController`) | `GET /api/quatang` | — | `{dsQuaTang: List<QuaTang>, tongDiem, lichSuDoiQua: List<VoucherKhachHang>}` |
+| Reward | `GET /api/quatang` | — | `{dsQuaTang: List<QuaTang>, tongDiem, lichSuDoiQua: List<VoucherKhachHang>}` |
 | | `GET /api/doi-diem/lich-su` | — | `List<VoucherKhachHang>` (lịch sử phiếu đổi quà của khách trong phiên) |
 | | `POST /api/doi-diem` | `{quaTangId}` | `VoucherKhachHang` kèm phiếu `giaoDichDoiDiem` |
 
@@ -276,7 +282,7 @@ server còn hiệu lực. `HTTPClient.fetch<T>(path, init?)` trả `data` và `t
 
 ### 7.2. Hợp đồng đọc lịch sử đổi quà (issue #13)
 
-- **Đường dẫn (nhóm Reward — `DoiDiemController`)**:
+- **Đường dẫn (nhóm Reward — `RESTController`)**:
   - `GET /api/doi-diem/lich-su` → `{ success: true, data: List<VoucherKhachHang> }`.
   - `GET /api/quatang` trả kèm `lichSuDoiQua: List<VoucherKhachHang>` cùng `{ dsQuaTang, tongDiem }` để màn `GDChonQua` tải danh mục + số dư + lịch sử đồng bộ trong một lượt.
 - **Chủ sở hữu & bảo mật**: luôn lọc theo `HttpSession.khachHangId` do đăng nhập xác thực; mọi tham số `khachHangId` client gửi trên query/body đều bị bỏ qua. Chưa đăng nhập → HTTP 401 `{ success: false, message }`.
@@ -334,7 +340,7 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │   ├── pom.xml
 │   └── src/main/
 │       ├── java/com/cineman/
-│       │   ├── controller/       # DangKyController, DatVeController, DoiDiemController
+│       │   ├── controller/       # RESTController (gộp Auth, Booking, Reward)
 │       │   ├── dao/              # DAO + ThanhVienDAO, KhachHangDAO, PhimDAO, KhungGioDAO,
 │       │   │                     # SuatChieuDAO, VeDAO, HoaDonDAO,
 │       │   │                     # VoucherKhachHangDAO, GiaoDichDoiDiemDAO, QuaTangDAO
@@ -353,7 +359,7 @@ Mỗi cảnh chọn trạng thái mẫu của chính cảnh đó (có dữ liệ
 
 ## 10. Diagrams
 
-Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md`
+Tên/chữ ký triển khai bám **bản `_fix`** của `../phase/nhan-xet-thiet-ke.md` (ngoài repo)
 (`VeDAO.kiemTraVe`, `taoHoaDon(hd, dsVe)`, ghi phiếu trước voucher, tách 3.24 a/b/c).
 Nguồn sơ đồ đổi điểm ở `diagrams/puml/hinh-3-22-hoat-dong-doi-diem.puml` và
 `diagrams/puml/hinh-3-25-tuan-tu-doi-diem.puml` đã bổ sung lịch sử theo issue #13;
@@ -425,21 +431,4 @@ Image frontend `node:24-alpine` — Node 24 thỏa `engines` của Vite 8 và `@
 
 - `hangThanhVien` đổi theo `tongDiem` ở ngưỡng nào — bc chưa định nghĩa → giữ String, không suy diễn.
 - Chi tiết cổng thanh toán thật (Q10 chỉ mock) — để pha Cài đặt.
-- Actor Cổng thanh toán không thêm (theo `requirement.md`).
-
-## 13. Shared understanding (tổng hợp từ grilling Q1–Q11)
-
-| Q | Quyết định | Trạng thái |
-| :--- | :--- | :--- |
-| Q1 | Frontend React (thay Thymeleaf) | ✅ chốt |
-| Q2 | Backend REST + DAO (3 controller nghiệp vụ) | ✅ chốt |
-| Q3 | Thêm `GiaoDichDoiDiem`, ghi phiếu trước voucher | ✅ chốt |
-| Q4 | Giữ 3 lớp con `QuaTang`; 1 bảng `tblQuaTang` (`loaiQua` + `giaTriGiam`), bỏ bảng tách `tblVoucherGiamGia` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | ✅ chốt |
-| Q5–Q6 | Chốt R1–R12 | ✅ chốt |
-| Q7 | Schema 13 bảng / 14 khóa ngoại, FK `tblXId` ([#3](https://github.com/22imer/PTTK-CineMan/issues/3), sửa 08/11/2026) | ✅ chốt |
-| Q8 | 12 trang `GD*.tsx` | ✅ chốt |
-| Q9 | Java Spring Boot, DAO chữ ký _fix | ✅ chốt |
-| Q10 | Session mock + cổng mock | ✅ chốt |
-| Q11 | Diagrams _fix + seed + docker | ✅ chốt |
-
-Chi tiết mục 10–12 đã được gộp vào file này; nếu đổi quyết định, sửa mục liên quan trong cùng commit.
+- Actor Cổng thanh toán không thêm (theo `requirement.md`, ngoài repo).

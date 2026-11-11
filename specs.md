@@ -1,9 +1,9 @@
 # CineMan — SPECS theo kịch bản bc.docx
 
-Nguồn: `../bc.docx` §1–§11 (báo cáo Module M1: đăng ký, đặt vé trực tuyến, đổi điểm).
+Nguồn: `../bc.docx` §1–§11 (ngoài repo, không có sẵn; báo cáo Module M1: đăng ký, đặt vé trực tuyến, đổi điểm).
 Tài liệu này trích nguyên văn kịch bản chuẩn + ngoại lệ của 3 chức năng thành spec triển khai.
-Kiến trúc triển khai xem `ARCHITECTURE.md`; quy tắc chốt R1–R12 xem `phase/quy-uoc-phan-tich.md`;
-sơ đồ xem `diagrams/` (bản `_fix` đã render).
+Kiến trúc triển khai xem `ARCHITECTURE.md`; quy tắc chốt R1–R12 xem `ARCHITECTURE.md` §4;
+trong `diagrams/` chỉ có sơ đồ DAO đặt vé và 2 sơ đồ đổi điểm (§10 của `ARCHITECTURE.md`).
 
 ---
 
@@ -264,7 +264,7 @@ Hệ thống quản lý rạp chiếu phim cho phép khách chưa có tài kho�
 | `VoucherKhachHang` | maVoucher, ngayNhan, ngaySuDung, trangThai | Quà/voucher thực tế phát cho KH sau đổi điểm; hạn = ngayNhan + 30 ngày, không lưu cột |
 
 > Bỏ qua: Hệ thống, giao diện, chức năng, thông tin (chung chung); KH chưa có tài khoản (chưa có dữ liệu lưu); Cổng thanh toán (hệ thống bên ngoài). Phiếu đổi điểm = thông tin `VoucherKhachHang`.
-> Sơ đồ: `diagrams/puml/hinh-2-04-lop-thuc-the.puml`.
+> Sơ đồ `hinh-2-04-lop-thuc-the` thuộc bc.docx, không có trong repo.
 
 ### 5.3. Quan hệ (phân tích)
 
@@ -347,7 +347,7 @@ Chọn chức năng đổi quà → `laydsQuaTang()` → hiển thị danh sách
 - **Bước 2:** kiểu dữ liệu — định danh, số lượng, điểm, tiền (VNĐ): `int`; chuỗi, loại, trạng thái: `String`; ngày, giờ: `Date`.
 - **Bước 3:** chuyển association thành aggregation/composition: `SuatChieu`+`Ghe` → `Ve`; `KhachHang`+`QuaTang` → `VoucherKhachHang`; `Phim`+`KhungGio`+`PhongChieu` → `SuatChieu`.
 - **Bước 4:** thuộc tính đối tượng theo quan hệ thành phần: `SuatChieu` có 1 `Phim`, 1 `KhungGio`, 1 `PhongChieu`; `PhongChieu` có `ArrayList<Ghe>`; `Ghe` có 1 `LoaiGhe`; `Ve` có 1 `SuatChieu`, 1 `Ghe`; `HoaDon` có `ArrayList<Ve>`, 1 `KhachHang`, 1 `VoucherKhachHang` (0..1); `VoucherKhachHang` có 1 `KhachHang`, 1 `QuaTang`; giữ `KhachHang ◁ ThanhVien`.
-- Sơ đồ: `diagrams/puml/hinh-2-04-lop-thuc-the.puml` (pha phân tích) + ảnh gốc `diagrams/chuong-3/hinh-3-01-*.jpeg` (thiết kế).
+- Sơ đồ: `hinh-2-04` (pha phân tích) + ảnh gốc `hinh-3-01-*` (thiết kế); cả hai thuộc bc.docx, không có trong repo.
 
 > Ghi chú triển khai: ở pha thiết kế, `VoucherKhachHang` chứa `giaoDichDoiDiem` (bỏ `khachHang`/`quaTang` trực tiếp) và `GiaoDichDoiDiem` là 1 lớp riêng (phiếu PDT-001).
 
@@ -433,13 +433,13 @@ trong một transaction, dù trên hình là các phương thức riêng.
 Mỗi lớp biên → 1 activity; mỗi action → 1 phương thức DAO; gọi qua `HTTPClient.fetch()` + `RESTController.requestMapping()`. Sơ đồ: `hinh-3-20`, `hinh-3-21`, `hinh-3-22` (bản `_fix` trong `diagrams/`).
 
 ### 12.1. Đăng ký
-`DangNhap.ts` hiển thị → click Đăng ký → `GDDangKyTaiKhoan.ts` → nhận thông tin đăng ký → `ThanhVienDAO.kiemTraThongTin()` (+ `kiemTraEmailSDT(email, sdt)`) → nếu hợp lệ → `KhachHangDAO.taoHoSo()` → báo thành công → Xác nhận → `DangNhap.ts`. (Không hợp lệ / đã tồn tại → báo tại `outThongBao`, quay lại nhập.)
+`DangNhap.tsx` hiển thị → click Đăng ký → `GDDangKyTaiKhoan.tsx` → nhận thông tin đăng ký → `ThanhVienDAO.kiemTraThongTin()` (+ `kiemTraEmailSDT(email, sdt)`) → nếu hợp lệ → `KhachHangDAO.taoHoSo()` → báo thành công → Xác nhận → `DangNhap.tsx`. (Không hợp lệ / đã tồn tại → báo tại `outThongBao`, quay lại nhập.)
 
 ### 12.2. Đặt vé
-`GDKhachHangHome.ts` (session `kh`) → click Đặt vé → `GDChonPhim.ts` (`PhimDAO.laydsPhim()`, hiển thị, chọn phim lưu session) → `GDKhungGio.ts` (`KhungGioDAO.laydsKhungGio()`, chọn ngày + khung giờ lưu session) → `GDSuatChieu.ts` (`SuatChieuDAO.laydsSuatChieu(idPhim, ngayChieu, idKhungGio)`, chọn suất lưu session) → `GDChonGhe.ts` (`VeDAO.laydsVe/laydsVeConHieuLuc(idSuatChieu)`, chọn ghế → `VeDAO.kiemTraVe` → `VeDAO.tinhtienVe(suatChieu, ghe)`, Tiếp tục → `HoaDonDAO.taoHoaDon()`, lưu `hoaDon` vào session) → `GDThanhToan.ts` (`HoaDonDAO.tinhTongTien(dsVe)`, đồng hồ 5 phút; áp voucher → `VoucherDAO.kiemTraVoucher` → `apDungVoucher`, không hợp lệ → báo; Thanh toán → `HoaDonDAO.kiemtraHetHan(hd)`: hết hạn → báo + `huyHoaDon()`, còn hạn → `xacNhanThanhToan(idHoaDon)`) → `GDXacNhanThanhToan.ts` (hiển thị hóa đơn đã thanh toán) → Quay lại.
+`GDKhachHangHome.tsx` (session `kh`) → click Đặt vé → `GDChonPhim.tsx` (`PhimDAO.laydsPhim()`, hiển thị, chọn phim lưu session) → `GDKhungGio.tsx` (`KhungGioDAO.laydsKhungGio()`, chọn ngày + khung giờ lưu session) → `GDSuatChieu.tsx` (`SuatChieuDAO.laydsSuatChieu(idPhim, ngayChieu, idKhungGio)`, chọn suất lưu session) → `GDChonGhe.tsx` (`VeDAO.laydsVe/laydsVeConHieuLuc(idSuatChieu)`, chọn ghế → `VeDAO.kiemTraVe` → `VeDAO.tinhtienVe(suatChieu, ghe)`, Tiếp tục → `HoaDonDAO.taoHoaDon()`, lưu `hoaDon` vào session) → `GDThanhToan.tsx` (`HoaDonDAO.tinhTongTien(dsVe)`, đồng hồ 5 phút; áp voucher → `VoucherDAO.kiemTraVoucher` → `apDungVoucher`, không hợp lệ → báo; Thanh toán → `HoaDonDAO.kiemtraHetHan(hd)`: hết hạn → báo + `huyHoaDon()`, còn hạn → `xacNhanThanhToan(idHoaDon)`) → `GDXacNhanThanhToan.tsx` (hiển thị hóa đơn đã thanh toán) → Quay lại.
 
 ### 12.3. Đổi điểm
-`GDKhachHangHome.ts` → click Đổi điểm → `GDChonQua.ts` (`QuaTangDAO.laydsQuaTang()` + `GiaoDichDoiDiemDAO.layLichSuTheoKhachHang(idKhachHang)`, hiển thị điểm + quà + lịch sử phiếu đổi quà; chọn quà → `QuaTangDAO.kiemTraSoLuong(idQua)` + `KhachHangDAO.kiemTraDiem(maKhachHang, diem)`: còn hàng + đủ điểm → `GDXacNhanDoiQua.ts`, không → báo không khả dụng/không đủ điểm) → `GDXacNhanDoiQua.ts` (hiển thị giao dịch; Quay lại → `GDChonQua.ts`; Xác nhận đổi → kiểm tra lại điểm + tồn kho, không hợp lệ → báo tại `outThongBao` → quay lại; hợp lệ → `truDiem` → `capNhatSoLuong` → `luuGiaoDich(gd)` → `luuVoucher(vc)` — một giao dịch) → `GDThongBao` (báo thành công, mã phiếu + voucher) → Xác nhận → `GDChonQua.ts` (tải lại điểm, tồn kho và lịch sử phiếu đổi quà).
+`GDKhachHangHome.tsx` → click Đổi điểm → `GDChonQua.tsx` (`QuaTangDAO.laydsQuaTang()` + `GiaoDichDoiDiemDAO.layLichSuTheoKhachHang(idKhachHang)`, hiển thị điểm + quà + lịch sử phiếu đổi quà; chọn quà → `QuaTangDAO.kiemTraSoLuong(idQua)` + `KhachHangDAO.kiemTraDiem(maKhachHang, diem)`: còn hàng + đủ điểm → `GDXacNhanDoiQua.tsx`, không → báo không khả dụng/không đủ điểm) → `GDXacNhanDoiQua.tsx` (hiển thị giao dịch; Quay lại → `GDChonQua.tsx`; Xác nhận đổi → kiểm tra lại điểm + tồn kho, không hợp lệ → báo tại `outThongBao` → quay lại; hợp lệ → `truDiem` → `capNhatSoLuong` → `luuGiaoDich(gd)` → `luuVoucher(vc)` — một giao dịch) → `GDThongBao` (báo thành công, mã phiếu + voucher) → Xác nhận → `GDChonQua.tsx` (tải lại điểm, tồn kho và lịch sử phiếu đổi quà).
 
 Hợp đồng đọc lịch sử (issue #13, chi tiết ARCHITECTURE.md §7.2): `GET /api/doi-diem/lich-su`
 trả `{success: true, data: VoucherKhachHang[]}`; `GET /api/quatang` trả thêm `lichSuDoiQua`
@@ -457,15 +457,15 @@ Phiếu rollback không xuất hiện; chưa đổi quà hiện “Chưa có l�
 Sơ đồ: `hinh-3-23` (đăng ký), `hinh-3-24a/b/c` (đặt vé tách 3 phần), `hinh-3-25` (đổi điểm). Mỗi thông điệp là một bước gọi trong kịch bản V3 (xem bc.docx §11 cho danh sách từng bước).
 
 ### 13.1. Đăng ký (20 bước)
-Khách click Đăng ký trên `DangNhap.ts` → `DangNhap.ts → GDDangKyTaiKhoan.ts` → hiển thị → KH nhập thông tin, click Đăng ký → `GDDangKyTaiKhoan.ts → KhachHang()` khởi tạo đối tượng → trả `kh` → `HTTPClient.fetch(kh)` → `RESTController.requestMapping(kh)` → `ThanhVienDAO.kiemTraThongTin(kh)` → `kiemTraEmailSDT(email, sdt)` → `KhachHangDAO.taoHoSo(kh)` → `KHD → KHE : lưu(kh)` → trả kết quả → `GDDangKyTaiKhoan.ts` thông báo thành công.
+Khách click Đăng ký trên `DangNhap.tsx` → `DangNhap.ts → GDDangKyTaiKhoan.ts` → hiển thị → KH nhập thông tin, click Đăng ký → `GDDangKyTaiKhoan.ts → KhachHang()` khởi tạo đối tượng → trả `kh` → `HTTPClient.fetch(kh)` → `RESTController.requestMapping(kh)` → `ThanhVienDAO.kiemTraThongTin(kh)` → `kiemTraEmailSDT(email, sdt)` → `KhachHangDAO.taoHoSo(kh)` → `KHD → KHE : lưu(kh)` → trả kết quả → `GDDangKyTaiKhoan.tsx` thông báo thành công.
 
 ### 13.2. Đặt vé (chia `hinh-3-24a/b/c`)
 - **24a** (chọn phim/khung giờ/suất chiếu): `GDChonPhim.ts → HTTPClient.fetch() → RESTController.requestMapping() → PhimDAO.laydsPhim()` → trả `List<Phim>` → hiển thị → chọn phim → `KhungGioDAO.laydsKhungGio()` → chọn ngày/khung giờ → `laydsSuatChieu(idPhim, ngayChieu, idKhungGio)` → hiển thị suất chiếu.
-- **24b** (chọn ghế, tạo HoaDon/Ve): `VeDAO.laydsGhe(idSuatChieu)` + `VeDAO.laydsVeConHieuLuc(suatChieu)` → hiển thị sơ đồ ghế → loop mỗi ghế: `VeDAO.kiemTraVe(idSuatChieu, idGhe)` → `VeDAO.tinhtienVe(suatChieu, ghe)` → `new Ve(...)` → thêm vào `dsVe` → click Tiếp tục → `new HoaDon(kh, dsVe, CHO_THANH_TOAN, hetHan)` → `HoaDonDAO.taoHoaDon(hd, dsVe)` (một giao dịch: kiểm tra `(suất, ghế)`, lưu HoaDon + Ve) → chuyển `GDThanhToan.ts`.
-- **24c** (thanh toán/voucher/xác nhận): `HoaDonDAO.tinhTongTien(dsVe)` → hiển thị → nhập mã voucher, click Áp dụng → `VoucherDAO.kiemTraVoucher` → `apDungVoucher` → `tinhTongTien(dsVe, voucher)` → hiển thị số tiền sau giảm → click Xác nhận thanh toán → `kiemTraHetHan(idHoaDon)` → `xacNhanThanhToan(idHoaDon)` → `VeDAO.capNhatTrangThaiVe(idHoaDon, DA_BAN)` → `KhachHangDAO.congDiem` → `GDXacNhanThanhToan.ts` thông báo đặt vé thành công.
+- **24b** (chọn ghế, tạo HoaDon/Ve): `VeDAO.laydsGhe(idSuatChieu)` + `VeDAO.laydsVeConHieuLuc(suatChieu)` → hiển thị sơ đồ ghế → loop mỗi ghế: `VeDAO.kiemTraVe(idSuatChieu, idGhe)` → `VeDAO.tinhtienVe(suatChieu, ghe)` → `new Ve(...)` → thêm vào `dsVe` → click Tiếp tục → `new HoaDon(kh, dsVe, CHO_THANH_TOAN, hetHan)` → `HoaDonDAO.taoHoaDon(hd, dsVe)` (một giao dịch: kiểm tra `(suất, ghế)`, lưu HoaDon + Ve) → chuyển `GDThanhToan.tsx`.
+- **24c** (thanh toán/voucher/xác nhận): `HoaDonDAO.tinhTongTien(dsVe)` → hiển thị → nhập mã voucher, click Áp dụng → `VoucherDAO.kiemTraVoucher` → `apDungVoucher` → `tinhTongTien(dsVe, voucher)` → hiển thị số tiền sau giảm → click Xác nhận thanh toán → `kiemTraHetHan(idHoaDon)` → `xacNhanThanhToan(idHoaDon)` → `VeDAO.capNhatTrangThaiVe(idHoaDon, DA_BAN)` → `KhachHangDAO.congDiem` → `GDXacNhanThanhToan.tsx` thông báo đặt vé thành công.
 
 ### 13.3. Đổi điểm (73 bước, `hinh-3-25`)
-`DangNhap.ts` đăng nhập (`ThanhVienDAO.kiemTraDangNhap()`) → lưu session KhachHang → `GDKhachHangHome.ts` → click Đổi điểm → `GDChonQua.ts` → `QuaTangDAO.laydsQuaTang()` → hiển thị điểm + quà → chọn quà → `kiemTraDiem` + `kiemTraSoLuong` → `GDXacNhanDoiQua.ts` → hiển thị giao dịch → click Xác nhận → kiểm tra lại → `truDiem` → `capNhatSoLuong(idQua, soLuong)` → **`new GiaoDichDoiDiem(kh, qt, soDiemTru, diemConLai, thoiGian)` → `GiaoDichDoiDiemDAO.luuGiaoDich(gd)` (ghi phiếu trước)** → `new VoucherKhachHang(gd, maVoucher, ngayNhan, trangThai)` → `VoucherKhachHangDAO.luuVoucher(vc)` → trả kết quả → `GDThongBao.ts` thông báo đổi điểm thành công.
+`DangNhap.tsx` đăng nhập (`ThanhVienDAO.kiemTraDangNhap()`) → lưu session KhachHang → `GDKhachHangHome.tsx` → click Đổi điểm → `GDChonQua.tsx` → `QuaTangDAO.laydsQuaTang()` → hiển thị điểm + quà → chọn quà → `kiemTraDiem` + `kiemTraSoLuong` → `GDXacNhanDoiQua.tsx` → hiển thị giao dịch → click Xác nhận → kiểm tra lại → `truDiem` → `capNhatSoLuong(idQua, soLuong)` → **`new GiaoDichDoiDiem(kh, qt, soDiemTru, diemConLai, thoiGian)` → `GiaoDichDoiDiemDAO.luuGiaoDich(gd)` (ghi phiếu trước)** → `new VoucherKhachHang(gd, maVoucher, ngayNhan, trangThai)` → `VoucherKhachHangDAO.luuVoucher(vc)` → trả kết quả → `GDThongBao.tsx` thông báo đổi điểm thành công.
 
 ---
 
@@ -474,7 +474,7 @@ Khách click Đăng ký trên `DangNhap.ts` → `DangNhap.ts → GDDangKyTaiKhoa
 | Nội dung bc.docx | Triển khai (đã chốt) |
 | :--- | :--- |
 | Frontend `*.ts` | React `GD*.tsx` (12 trang) |
-| Backend "RESTController" chung + `HTTPClient.fetch()` | 3 `@RestController` nghiệp vụ + `HTTPClient.fetch()` |
+| Backend "RESTController" chung + `HTTPClient.fetch()` | 1 `RESTController` (`@RestController` duy nhất, gộp Auth/Booking/Reward) ở backend; `HTTPClient.fetch()` chỉ ở frontend |
 | 12 bảng, không có `GiaoDichDoiDiem` | 13 bảng: thêm `tblGiaoDichDoiDiem` (lịch sử đổi quà) |
 | 3 lớp con ghi gộp nhưng mô tả ít | 1 bảng `tblQuaTang` giữ `loaiQua` + `giaTriGiam`; vẫn đủ 3 lớp con `VoucherGiamGia`/`VoucherVeTang`/`VoucherVatPham` |
 | Chữ ký DAO rỗng (`taoHoSo()`…) | Chữ ký `_fix` đầy đủ (xem §7.2, ARCHITECTURE.md §5) |
