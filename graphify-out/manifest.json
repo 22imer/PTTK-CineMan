@@ -426,15 +426,15 @@
     "semantic_hash": "09e453e7867b2e752c9829c85917869f"
   },
   "AGENTS.md": {
-    "mtime": 1794370582.975513,
-    "seen": 1794370593.4737198,
-    "ast_hash": "eb832d13be88449cb19b14d7ab65a1d8",
+    "mtime": 1794370885.47979,
+    "seen": 1794371055.4497867,
+    "ast_hash": "0085b32846e1e9917b3586dbafa9aede",
     "semantic_hash": ""
   },
   "ARCHITECTURE.md": {
-    "mtime": 1794370255.2111797,
-    "seen": 1794370511.1542835,
-    "ast_hash": "c0f4e9271eba21c4d17fa02c82f0440a",
+    "mtime": 1794370993.232593,
+    "seen": 1794371055.4497876,
+    "ast_hash": "3191a341ffac7283dbd11dad0910a728",
     "semantic_hash": ""
   },
   "GLOSSARY.md": {
@@ -450,9 +450,9 @@
     "semantic_hash": "84b63ae058d24579562defe6ab7f5235"
   },
   "specs.md": {
-    "mtime": 1794370255.2511828,
-    "seen": 1794370511.1542902,
-    "ast_hash": "6c5bc0c545bd1a5a454e9f2040da5189",
+    "mtime": 1794370861.103388,
+    "seen": 1794371055.449797,
+    "ast_hash": "40ea38a78e66009fbac45de2a5058bce",
     "semantic_hash": ""
   },
   "frontend/public/ticket-demo.svg": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794370255.2431822,
-    "seen": 1794370511.1542878,
-    "ast_hash": "85b09d05acdbe5adac0d675025bbcd15",
+    "mtime": 1794371081.236019,
+    "seen": 1794371082.461923,
+    "ast_hash": "ec75b41d19b7ab2f463f50cc3413ae30",
     "semantic_hash": ""
   },
   "diagrams/out/dao-dat-ve-theo-so-do.svg": {
@@ -549,6 +549,30 @@
     "mtime": 1794370565.327349,
     "seen": 1794370593.4737182,
     "ast_hash": "e678cc5b35c743820f328011229066c8",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1794370896.0443687,
+    "seen": 1794371055.4496856,
+    "ast_hash": "87a54a1a8281f96286da1573df0f42d6",
+    "semantic_hash": ""
+  },
+  "backend/src/test/java/com/cineman/ArchitectureInvariantTest.java": {
+    "mtime": 1794370954.113712,
+    "seen": 1794371055.4497411,
+    "ast_hash": "de8b09002d3af84997e045dc505507fa",
+    "semantic_hash": ""
+  },
+  "scripts/check-md-links.py": {
+    "mtime": 1794370803.1665206,
+    "seen": 1794371055.4497852,
+    "ast_hash": "1cb3576bcf9ca25a0ce8d19059e64da6",
+    "semantic_hash": ""
+  },
+  "scripts/README.md": {
+    "mtime": 1794370885.46955,
+    "seen": 1794371055.4497957,
+    "ast_hash": "229910dd11596bcd939bd366a0fd89d8",
     "semantic_hash": ""
   },
   "frontend/package-lock.json": {
