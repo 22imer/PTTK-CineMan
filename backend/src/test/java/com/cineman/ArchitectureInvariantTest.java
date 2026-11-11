@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Bất biến kiến trúc (AGENTS.md §2, ARCHITECTURE.md §3): 13 bảng, 14 khóa ngoại, 3 controller nghiệp vụ. */
+/** Bất biến kiến trúc (AGENTS.md §2, ARCHITECTURE.md §3, §5): 13 bảng, 14 khóa ngoại, 1 RESTController. */
 @SpringBootTest
 class ArchitectureInvariantTest {
 
@@ -33,9 +33,9 @@ class ArchitectureInvariantTest {
     }
 
     @Test
-    void chiCo3ControllerNghiepVu() {
+    void chiCoMotRESTController() {
         assertThat(context.getBeansWithAnnotation(RestController.class).values())
                 .extracting(bean -> ClassUtils.getUserClass(bean).getSimpleName())
-                .containsExactlyInAnyOrder("DangKyController", "DatVeController", "DoiDiemController");
+                .containsExactly("RESTController");
     }
 }

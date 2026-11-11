@@ -12,13 +12,13 @@ Hệ thống quản lý rạp chiếu phim — **module M1 (3 chức năng, khô
 2. Đặt mua vé trực tuyến
 3. Đổi điểm thưởng lấy quà tặng/vé
 
-Frontend **React + Vite + TypeScript** (12 trang `GD*.tsx`), Backend **Java Spring Boot REST** (3 controller + DAO),
+Frontend **React + Vite + TypeScript** (12 trang `GD*.tsx`), Backend **Java Spring Boot REST** (1 `RESTController` + DAO),
 DB **MySQL** (13 bảng, `tblGiaoDichDoiDiem` lưu lịch sử đổi quà). Không sửa `../bc.docx`.
 
 ## 2. Quy tắc không đàm phán
 
 - **Giữ nguyên tên**: 13 lớp thực thể + 3 lớp con `QuaTang` (`VoucherGiamGia`, `VoucherVeTang`, `VoucherVatPham`),
-  13 bảng `tbl*`, `tblXId` cho khóa ngoại, các `*DAO` + `GiaoDichDoiDiemDAO`, 3 controller nghiệp vụ,
+  13 bảng `tbl*`, `tblXId` cho khóa ngoại, các `*DAO` + `GiaoDichDoiDiemDAO`, `RESTController` (1 `@RestController` duy nhất, gộp 3 nhóm Auth/Booking/Reward; thư mục `controller/` chỉ có file này),
   `HTTPClient.fetch()`, 12 trang `GD*.tsx`, chữ ký DAO theo `ARCHITECTURE.md` §5 (bản _fix).
   Đổi tên = phá đối chiếu sơ đồ — hỏi trước.
 - **Không tự bịa nghiệp vụ**: chỉ 3 chức năng trên. Cổng thanh toán là ngoài — ta chỉ lưu kết quả vào `tblHoaDon`.
@@ -31,7 +31,7 @@ DB **MySQL** (13 bảng, `tblGiaoDichDoiDiem` lưu lịch sử đổi quà). Kh�
   `hetHan` chỉ nằm ở server (`tblHoaDon`), đồng hồ FE chỉ hiển thị.
 - **Ràng buộc trùng `(suất, ghế)`**: kiểm tra ở tầng ứng dụng trong giao dịch `taoHoaDon` bằng lọc
   `trangThaiVe IN ('DANG_GIU','DA_BAN')` — **không thêm UNIQUE trơn, không thêm cột `conHieuLuc`**.
-- **Frontend không chạm DB**: mọi dữ liệu qua `fetch()` → 3 `@RestController` → DAO. Entity là POJO, DAO dùng JdbcTemplate.
+- **Frontend không chạm DB**: mọi dữ liệu qua `fetch()` → `RESTController` (`@RestController`) → DAO. `HTTPClient` chỉ tồn tại ở frontend. Entity là POJO, DAO dùng JdbcTemplate.
 - **Mật khẩu**: băm BCrypt, không bao giờ lưu/log thô.
 - **Diagrams**: thay đổi bản _fix phải sửa cả `diagrams/puml/` gốc, không sửa ảnh `out/` bằng tay.
 

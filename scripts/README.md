@@ -19,9 +19,9 @@
 
   ```bash
   # Slash command: để message trần (không bọc quote); quote chỉ dành cho đường dẫn file.
-  /checkpoint feat(auth): mô tả ngắn (#7) -- backend/src/main/java/com/cineman/controller/DangKyController.java
+  /checkpoint feat(auth): mô tả ngắn (#7) -- backend/src/main/java/com/cineman/controller/RESTController.java
   # hoặc gọi trực tiếp (đây là shell nên message vẫn phải quote):
-  bash scripts/agent-commit.sh "feat(auth): mô tả ngắn (#7)" -- backend/src/main/java/com/cineman/controller/DangKyController.java
+  bash scripts/agent-commit.sh "feat(auth): mô tả ngắn (#7)" -- backend/src/main/java/com/cineman/controller/RESTController.java
   ```
 
   Message của `/checkpoint` là **toàn bộ text thô** trước dấu `--` độc lập **cuối cùng**, giữ nguyên khoảng trắng

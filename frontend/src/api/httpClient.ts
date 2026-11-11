@@ -23,7 +23,7 @@ function serverError(httpStatus: number, statusText: string): string {
 }
 
 /**
- * Cầu nối duy nhất FE → 3 @RestController (ARCHITECTURE.md §7).
+ * Cầu nối duy nhất FE → `RESTController` (ARCHITECTURE.md §7).
  * Luôn gọi path tương đối `/api/...` để cookie HttpSession đi qua Vite proxy.
  */
 export class HTTPClient {
