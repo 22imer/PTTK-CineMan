@@ -96,8 +96,7 @@ Controller là Spring `@RestController` (3 controller nghiệp vụ). Frontend k
 | `KhachHangDAO` | `taoHoSo(kh : KhachHang) : boolean`, `kiemTraDiem(maKhachHang : String, diem : int) : boolean`, `truDiem(maKhachHang : String, diem : int) : boolean`, `congDiem(maKhachHang : String, diem : int) : boolean`, `layTheoId(id : int) : KhachHang`, `khoaTheoId(id : int) : KhachHang` (đọc/khóa hồ sơ không mật khẩu) |
 | `PhimDAO` / `KhungGioDAO` | `laydsPhim() : List<Phim>`, `laydsKhungGio() : List<KhungGio>` |
 | `SuatChieuDAO` | `laydsSuatChieu(idPhim : int, ngayChieu : Date, idKhungGio : int) : List<SuatChieu>`, `layTheoId(id : int) : SuatChieu`, `khoaTheoId(id : int) : SuatChieu` |
-| `GheDAO` | `laydsGhe(idSuatChieu : int) : List<Ghe>` |
-| `VeDAO` | `laydsVeConHieuLuc(suatChieu) : List<Ve>`, `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`, `tinhTienVe(suatChieu : SuatChieu, ghe : Ghe) : Ve` (= `giaCoSo + phuThu`, tạo đối tượng `Ve`), `capNhatTrangThaiVe(idHoaDon : int, trangThai : String) : boolean`, `huyVe(idVe : int)` |
+| `VeDAO` | `laydsGhe(idSuatChieu : int) : List<Ghe>` (toàn bộ ghế phòng của suất, kể cả ghế chưa có vé), `laydsVeConHieuLuc(suatChieu) : List<Ve>`, `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`, `tinhTienVe(suatChieu : SuatChieu, ghe : Ghe) : Ve` (= `giaCoSo + phuThu`, tạo đối tượng `Ve`), `capNhatTrangThaiVe(idHoaDon : int, trangThai : String) : boolean`, `huyVe(idVe : int)` |
 | `HoaDonDAO` | `taoHoaDon(hd : HoaDon, dsVe : List<Ve>) : HoaDon` (1 giao dịch: kiểm tra `(suất,ghế)` + lưu HoaDon + Ve), `tinhTongTien(dsVe : List<Ve>) : int`, `tinhTongTien(dsVe, voucher) : int` (1 hàm, voucher optional — **bỏ** `capNhatTongTien`), `kiemTraHetHan(idHoaDon : int)`, `xacNhanThanhToan(idHoaDon : int)`, `huyHoaDon(idHoaDon : int)` — **bỏ** `timHoaDonTheoIdVe`, bỏ `phatHanhVe` (vé tạo cùng hóa đơn) |
 | `VoucherKhachHangDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`, `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean`, `luuVoucher(vc : VoucherKhachHang) : int`, `layTheoId(id : int) : VoucherKhachHang`, `khoaTheoId(id : int) : VoucherKhachHang` — **bỏ** `taoVoucher()` không tham số |
 | `GiaoDichDoiDiemDAO` | `luuGiaoDich(gd : GiaoDichDoiDiem) : int`, `layLichSuTheoKhachHang(idKhachHang : int) : List<VoucherKhachHang>` |
@@ -114,6 +113,64 @@ tồn kho từ các hàng vừa khóa, tránh đọc lại snapshot cũ khi có 
 
 - Đổi điểm `thucHienDoiDiem`: kiểm tra lại điểm + tồn kho → trừ điểm → giảm tồn kho → **ghi `GiaoDichDoiDiem` trước** (`luuGiaoDich`) → tạo `VoucherKhachHang(giaoDichDoiDiem, maVoucher, ngayNhan, CHUA_SU_DUNG)` → `luuVoucher`. Lỗi bất kỳ bước nào → rollback (không trừ điểm, không giảm kho, không voucher, không phiếu — Q3).
 - Đặt vé `taoHoaDon(hd, dsVe)`: kiểm tra trùng `(suất, ghế)` + lưu hóa đơn + vé `DANG_GIU` trong **một giao dịch**. `xacNhanThanhToan` (1 giao dịch): hóa đơn `DA_THANH_TOAN`, vé → `DA_BAN`, voucher → `DA_SU_DUNG`, cộng điểm (R1).
+
+### 5.1. Thiết kế DAO đặt vé theo sơ đồ
+
+**Phạm vi:** bản thiết kế trình bày theo ảnh lớp DAO đã chốt, không thay thế hợp đồng triển khai ở đầu §5.
+Chỉ hiển thị lớp cha `DAO` và 8 DAO con phục vụ đặt vé. Truy vấn ghế `laydsGhe(idSuatChieu) : List<Ghe>`
+thuộc `VeDAO`; không có lớp `GheDAO`. Giữ các phương thức trong ảnh, bổ sung kiểu còn thiếu.
+Các DAO/phương thức kỹ thuật không xuất hiện trong hình vẫn tồn tại trong backend.
+Không đổi API, thực thể, quy tắc R1–R12 hoặc sơ đồ đổi điểm.
+
+Nguồn: [dao-dat-ve-theo-so-do.puml](diagrams/puml/dao-dat-ve-theo-so-do.puml).
+Ảnh render: [dao-dat-ve-theo-so-do.svg](diagrams/out/dao-dat-ve-theo-so-do.svg).
+
+`DAO` có `-con : Connection` và `+DAO()`. Cả 8 lớp dưới đây kế thừa `DAO` và có constructor công khai
+không tham số tương ứng (`+PhimDAO()`, …). Constructor không được kế thừa.
+`-con` là thuộc tính private của lớp cha; quan hệ kế thừa không cho lớp con truy cập trực tiếp thuộc tính này.
+Đây là ký hiệu thiết kế khái niệm, không yêu cầu thay cách Spring quản lý kết nối.
+
+| DAO trong hình | Phương thức công khai (ngoài constructor) | Trách nhiệm |
+| :--- | :--- | :--- |
+| `ThanhVienDAO` | `kiemTraDangNhap(username : String, password : String) : boolean` | Xác thực thành viên trước khi đặt vé; mật khẩu vẫn kiểm tra bằng BCrypt. |
+| `KhachHangDAO` | `congDiem(maKhachHang : String, diem : int) : boolean` | Cộng điểm khi thanh toán thành công theo R1; không cộng lại khi nhận kết quả lặp. |
+| `PhimDAO` | `laydsPhim() : List<Phim>` | Truy vấn danh sách phim đang chiếu. |
+| `KhungGioDAO` | `laydsKhungGio() : List<KhungGio>` | Truy vấn danh sách khung giờ chiếu. |
+| `SuatChieuDAO` | `laydsSuatChieu(idPhim : int, ngayChieu : Date, idKhungGio : int) : List<SuatChieu>` | Tìm suất chiếu theo phim, ngày và khung giờ. |
+| `VeDAO` | `tinhtienVe(suatChieu : SuatChieu, ghe : Ghe) : int`; `laydsGhe(idSuatChieu : int) : List<Ghe>`; `laydsVe(idSuatChieu : int) : List<Ve>`; `kiemTraVe(idSuatChieu : int, idGhe : int) : boolean`; `phatHanhVe(idHoaDon : int) : boolean`; `huyVe(idVe : int) : boolean` | Tính giá cơ sở + phụ thu; truy vấn toàn bộ ghế trong phòng của suất chiếu, gồm cả ghế chưa có vé; đọc vé để hiển thị trạng thái ghế; kiểm tra ghế đã được giữ/bán; chuyển trạng thái bán hoặc hủy vé. |
+| `HoaDonDAO` | `taoHoaDon() : HoaDon`; `xacNhanThanhToan(idHoaDon : int) : boolean`; `huyHoaDon() : boolean` | Tạo hóa đơn; cập nhật thanh toán thành công; hủy hóa đơn chưa thanh toán. |
+| `VoucherDAO` | `kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang`; `apDungVoucher(idHoaDon : int, idVoucher : int) : boolean` | Kiểm tra tính hợp lệ, chủ sở hữu và gắn tối đa một voucher vào hóa đơn; chỉ tiêu thụ voucher khi thanh toán thành công. |
+
+Kiểu `int`, `List<Ve>` và `boolean` được bổ sung cho các tham số/kết quả còn thiếu trong ảnh.
+Giữ nguyên cách viết `tinhtienVe` và tên `VoucherDAO` của hình; không đổi tên symbol Java theo hình.
+`kiemTraVe` trả `true` khi ghế đã có vé `DANG_GIU` hoặc `DA_BAN`; vé `DA_HUY` không chặn ghế.
+`laydsGhe` cung cấp sơ đồ ghế đầy đủ; `laydsVe` cung cấp trạng thái vé để đánh dấu ghế đang giữ/đã bán.
+Không suy ra toàn bộ sơ đồ ghế từ danh sách vé, vì ghế chưa có vé vẫn phải hiển thị.
+
+**Đối chiếu với triển khai hiện tại:**
+
+| Ký hiệu trong thiết kế theo ảnh | Triển khai Java / cách hiểu |
+| :--- | :--- |
+| `DAO.con`, constructor không tham số | `DAO` giữ `JdbcTemplate`, constructor nhận `JdbcTemplate`; kết nối được Spring quản lý theo transaction, không giữ một `Connection` chung cho mọi khách. |
+| `ThanhVienDAO.kiemTraDangNhap(username, password)` | `kiemTraDangNhap(ThanhVien tv)` nhận đối tượng do controller dựng từ thông tin đăng nhập. |
+| `SuatChieuDAO` dùng `Date` | Java dùng `LocalDate` cho ngày chiếu theo quy ước kiểu ở §3. |
+| `VeDAO.tinhtienVe(...): int` | `tinhTienVe(...): Ve` tạo đối tượng vé chưa lưu; giá nằm ở `Ve.giaVe`. |
+| `VeDAO.laydsVe(idSuatChieu)` | `laydsVeConHieuLuc(SuatChieu)` đọc vé đang giữ/đã bán; không thay thế truy vấn danh sách ghế đầy đủ. |
+| `VeDAO.phatHanhVe(idHoaDon)` | `capNhatTrangThaiVe(idHoaDon, DA_BAN)` trong giao dịch xác nhận thanh toán; không gọi bán vé lần nữa sau khi giao dịch đã hoàn tất. |
+| `HoaDonDAO.taoHoaDon()` | Chữ ký trình bày rút gọn của `taoHoaDon(hd, dsVe)`; dữ liệu khách hàng và vé phải được truyền tường minh khi triển khai. |
+| `HoaDonDAO.huyHoaDon()` | Chữ ký trình bày rút gọn của `huyHoaDon(idHoaDon)`; luồng HTTP truyền thêm ID khách đăng nhập để kiểm tra quyền sở hữu. |
+| `VoucherDAO` | Lớp Java vẫn tên `VoucherKhachHangDAO`; không tạo lớp thay thế hoặc alias `VoucherDAO`. |
+
+`taoHoaDon()` và `huyHoaDon()` không có nghĩa là DAO tự đọc session hoặc giữ thuộc tính
+“khách hàng/hóa đơn hiện tại”. `DatVeController` lấy danh tính từ phiên và truyền dữ liệu vào DAO.
+Các phương thức khác giữ ý nghĩa ở §5; hình không phải danh mục đầy đủ của backend.
+
+**Ranh giới giao dịch không đổi:** Tiếp tục → tạo hóa đơn + vé `DANG_GIU` trong một transaction.
+Thanh toán thành công → cập nhật hóa đơn, bán vé, sử dụng voucher và cộng điểm trong một transaction.
+Các phương thức tách trên hình chỉ thể hiện trách nhiệm, không phải các transaction hoặc HTTP request độc lập.
+Hủy hoặc hết 300 giây → nhả ghế; không hủy hóa đơn đã thanh toán.
+Mock thanh toán thất bại vẫn giữ hóa đơn chờ để thử lại trong hạn theo R4.
+
 
 ## 6. Frontend — 12 trang React
 
@@ -266,8 +323,9 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │       ├── main.tsx              # mount React
 │       ├── App.tsx               # điều hướng theo React state (mục 6)
 │       ├── types.ts              # kiểu hồ sơ, đặt vé và đổi điểm dùng chung
-│       ├── styles.css
-│       ├── ui/                   # primitives, data model cho view và preview mẫu
+│       ├── styles.css            # giao diện sảnh rạp pixel art (token ở :root, font Handjet qua @fontsource)
+│       ├── assets/hall-scene.svg # tranh sảnh pixel art, sinh bởi frontend/scripts/gen-hall-scene.mjs
+│       ├── ui/                   # primitives, HallScene, data model cho view và preview mẫu
 │       ├── api/httpClient.ts     # HTTPClient.fetch()
 │       └── pages/                # DangNhap, GDDangKyTaiKhoan, GDKhachHangHome + 9 màn nghiệp vụ
 ├── backend/                      # Spring Boot (Maven)
@@ -278,7 +336,7 @@ Quyết định seed (giá trị bc chưa nêu — chỉ là dữ liệu mẫu, 
 │       ├── java/com/cineman/
 │       │   ├── controller/       # DangKyController, DatVeController, DoiDiemController
 │       │   ├── dao/              # DAO + ThanhVienDAO, KhachHangDAO, PhimDAO, KhungGioDAO,
-│       │   │                     # SuatChieuDAO, GheDAO, VeDAO, HoaDonDAO,
+│       │   │                     # SuatChieuDAO, VeDAO, HoaDonDAO,
 │       │   │                     # VoucherKhachHangDAO, GiaoDichDoiDiemDAO, QuaTangDAO
 │       │   └── entity/           # ThanhVien, KhachHang, Phim, KhungGio, PhongChieu, SuatChieu,
 │       │                         # LoaiGhe, Ghe, Ve, HoaDon, QuaTang (+3 lớp con), VoucherKhachHang,
@@ -302,6 +360,11 @@ Nguồn sơ đồ đổi điểm ở `diagrams/puml/hinh-3-22-hoat-dong-doi-diem
 ảnh SVG/PNG trong `diagrams/out/` được render từ nguồn, không sửa ảnh bằng tay.
 Khi đồng bộ với repo phân tích, cần cập nhật nhánh mock thất bại ở R4: giữ hóa đơn chờ
 thanh toán để thử lại trong hạn theo story 35 của issue #1.
+
+Sơ đồ [DAO đặt vé theo ảnh](diagrams/out/dao-dat-ve-theo-so-do.svg) có nguồn riêng
+`diagrams/puml/dao-dat-ve-theo-so-do.puml`; đây là thiết kế khái niệm ở §5.1, không thay thế chữ ký `_fix`.
+Render SVG từ nguồn bằng `plantuml -tsvg -charset UTF-8 -o ../out diagrams/puml/dao-dat-ve-theo-so-do.puml`.
+
 
 ## 11. Chạy & build
 
@@ -337,6 +400,18 @@ Smoke trên seed: đăng nhập → Đổi điểm → thấy PDT-001/PT02/100/1
 đổi PT02 → về danh mục thấy thêm đúng một phiếu mới → đặt SC03 ghế A3+B3, áp voucher seed,
 thanh toán 120.000đ và cộng 10 điểm → mở lại lịch sử: điểm hiện có 160, phiếu cũ vẫn 150,
 voucher seed đã dùng kèm ngày dùng. Khách đăng ký mới thấy “Chưa có lịch sử đổi quà.”
+
+Issue #27: chuỗi tiếng Việt đi nguyên dạng UTF-8 từ seed → MySQL `utf8mb4` → JDBC → JSON → DOM.
+`data.sql` đặt `SET NAMES utf8mb4` trước INSERT: charset của server không thay thế charset phiên import.
+Kiểm chứng trên MySQL 8.4: import cùng file UTF-8 bằng client `latin1` và `utf8mb4`, đọc lại qua kết nối
+`utf8mb4`; tên khách, địa chỉ, phim, quà, loại ghế và phòng phải giữ nguyên dấu tiếng Việt.
+Không giải mã bù ở frontend. `backend/src/main/resources/repair-unicode.sql` sửa record seed cũ trong
+một transaction: chỉ thay từng trường có ID và giá trị byte khớp chính xác seed bị import qua Latin-1.
+Chữ đã đúng/chỉnh sửa riêng, NULL, ID, mật khẩu, điểm, tồn kho và giao dịch không đổi; chạy lại là no-op.
+Sao lưu trước, chạy thủ công trên DB đang dùng (xem README); không nạp lại `schema.sql`/`data.sql`.
+Script này không khôi phục dữ liệu nhập riêng hoặc dạng lỗi khác bằng cách đoán nội dung.
+`UnicodeRepairIntegrationTest` chỉ bật với `UNICODE_TEST_DB_URL` trỏ tới MySQL riêng được phép xóa
+schema/seed; kiểm chứng bảo toàn mọi cột/record của 13 bảng và tính idempotent của bản sửa.
 
 
 UI hiện chỉ được kiểm chứng hoàn toàn về cấu trúc qua DOM render trong Lightpanda;

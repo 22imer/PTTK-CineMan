@@ -1,0 +1,207 @@
+{
+  "node_count": 882,
+  "unverified_node_count": 0,
+  "raw_edge_count": 2491,
+  "non_object_edges": 0,
+  "missing_endpoint_edges": 0,
+  "dangling_endpoint_edges": 142,
+  "external_reference_edges": 9,
+  "self_loop_edges": 4,
+  "valid_candidate_edges": 2340,
+  "exact_duplicate_edges": 0,
+  "directed_unique_endpoint_pairs": 2209,
+  "directed_same_endpoint_collapsed_edges": 131,
+  "undirected_unique_endpoint_pairs": 2207,
+  "undirected_same_endpoint_collapsed_edges": 133,
+  "same_endpoint_group_count": 130,
+  "relation_variant_groups": 54,
+  "source_file_variant_groups": 0,
+  "source_location_variant_groups": 9,
+  "context_variant_groups": 68,
+  "post_build_graph_type": "Graph",
+  "post_build_node_count": 928,
+  "post_build_edge_count": 2352,
+  "post_build_error": "",
+  "producer_suppression": {
+    "path": "/home/duck/.local/share/uv/tools/graphifyy/lib/python3.14/site-packages/graphify/extract.py",
+    "total_sites": 12,
+    "sites": [
+      {
+        "line": 1886,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2581,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2583,
+        "name": "seen_doc_refs",
+        "tuple_arity": 0,
+        "sample": "seen_doc_refs: set[str] = set()"
+      },
+      {
+        "line": 3250,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 3397,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n.get(\"id\") for n in nodes}"
+      },
+      {
+        "line": 4811,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 4997,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 8958,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 9066,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 9145,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 9670,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 9671,
+        "name": "seen_edges",
+        "tuple_arity": 4,
+        "sample": "seen_edges: set[tuple[str, str, str, str | None]] = set()"
+      }
+    ],
+    "error": ""
+  },
+  "examples": [
+    {
+      "source": "backend_src_main_java_com_cineman_controller_apiresponse_apiresponse_ok",
+      "target": "backend_src_main_java_com_cineman_controller_apiresponse_apiresponse",
+      "edge_count": 3,
+      "relations": [
+        "calls",
+        "references"
+      ],
+      "source_files": [
+        "backend/src/main/java/com/cineman/controller/ApiResponse.java"
+      ],
+      "source_locations": [
+        "L10",
+        "L13",
+        "L9"
+      ],
+      "contexts": [
+        "call",
+        "return_type"
+      ]
+    },
+    {
+      "source": "omp_hooks_post_commit_checkpoint",
+      "target": "omp_hooks_post_commit_checkpoint_sessionkey",
+      "edge_count": 2,
+      "relations": [
+        "calls",
+        "contains"
+      ],
+      "source_files": [
+        ".omp/hooks/post/commit-checkpoint.ts"
+      ],
+      "source_locations": [
+        "L26",
+        "L265"
+      ],
+      "contexts": [
+        "",
+        "call"
+      ]
+    },
+    {
+      "source": "omp_hooks_post_commit_checkpoint",
+      "target": "omp_hooks_post_commit_checkpoint_tolocalpath",
+      "edge_count": 2,
+      "relations": [
+        "calls",
+        "contains"
+      ],
+      "source_files": [
+        ".omp/hooks/post/commit-checkpoint.ts"
+      ],
+      "source_locations": [
+        "L268",
+        "L33"
+      ],
+      "contexts": [
+        "",
+        "call"
+      ]
+    },
+    {
+      "source": "omp_hooks_post_commit_checkpoint",
+      "target": "omp_hooks_post_commit_checkpoint_collectobservedpaths",
+      "edge_count": 2,
+      "relations": [
+        "calls",
+        "contains"
+      ],
+      "source_files": [
+        ".omp/hooks/post/commit-checkpoint.ts"
+      ],
+      "source_locations": [
+        "L267",
+        "L60"
+      ],
+      "contexts": [
+        "",
+        "call"
+      ]
+    },
+    {
+      "source": "omp_hooks_post_commit_checkpoint",
+      "target": "omp_hooks_post_commit_checkpoint_displaypath",
+      "edge_count": 2,
+      "relations": [
+        "calls",
+        "contains"
+      ],
+      "source_files": [
+        ".omp/hooks/post/commit-checkpoint.ts"
+      ],
+      "source_locations": [
+        "L281",
+        "L82"
+      ],
+      "contexts": [
+        "",
+        "call"
+      ]
+    }
+  ]
+}

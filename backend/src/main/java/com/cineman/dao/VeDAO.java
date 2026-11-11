@@ -1,6 +1,7 @@
 package com.cineman.dao;
 
 import com.cineman.entity.Ghe;
+import com.cineman.entity.LoaiGhe;
 import com.cineman.entity.SuatChieu;
 import com.cineman.entity.Ve;
 import java.sql.PreparedStatement;
@@ -24,8 +25,12 @@ public class VeDAO extends DAO {
     public static final String DA_BAN = "DA_BAN";
     public static final String DA_HUY = "DA_HUY";
 
+    private static final String COT_GHE = """
+            g.id AS gheId, g.soGhe, g.hangGhe,
+            lg.id AS loaiGheId, lg.tenLoai, lg.phuThu""";
+
     private static final String COT_VE = "v.id AS veId, v.giaVe, v.trangThaiVe, "
-            + SuatChieuDAO.COT_SUAT_CHIEU + ", " + GheDAO.COT_GHE;
+            + SuatChieuDAO.COT_SUAT_CHIEU + ", " + COT_GHE;
 
     private static final String TU_VE = """
             FROM tblVe v
@@ -59,6 +64,23 @@ public class VeDAO extends DAO {
         return jdbcTemplate.query("SELECT " + COT_VE + " " + TU_VE + """
                  WHERE v.tblHoaDonId = ?
                  ORDER BY v.id""", (rs, soThuTu) -> docVe(rs), idHoaDon);
+    }
+
+    /**
+     * Toàn bộ ghế của phòng chứa suất chiếu (kể cả ghế chưa có vé), sắp theo id (A1..A8, B1.., rồi
+     * Sweetbox E), khớp sơ đồ ghế ở frontend. Trạng thái giữ/bán lấy từ {@link #laydsVeConHieuLuc}.
+     */
+    public List<Ghe> laydsGhe(int idSuatChieu) {
+        if (idSuatChieu <= 0) {
+            return List.of();
+        }
+        return jdbcTemplate.query("""
+                SELECT %s
+                FROM tblGhe g
+                JOIN tblLoaiGhe lg ON lg.id = g.tblLoaiGheId
+                JOIN tblSuatChieu sc ON sc.tblPhongChieuId = g.tblPhongChieuId
+                WHERE sc.id = ?
+                ORDER BY g.id""".formatted(COT_GHE), (rs, soThuTu) -> docGhe(rs), idSuatChieu);
     }
 
     /**
@@ -127,13 +149,26 @@ public class VeDAO extends DAO {
         return jdbcTemplate.update("UPDATE tblVe SET trangThaiVe = 'DA_HUY' WHERE id = ?", idVe) > 0;
     }
 
+    static Ghe docGhe(ResultSet rs) throws SQLException {
+        Ghe ghe = new Ghe();
+        ghe.setId(rs.getInt("gheId"));
+        ghe.setSoGhe(rs.getString("soGhe"));
+        ghe.setHangGhe(rs.getString("hangGhe"));
+        LoaiGhe loaiGhe = new LoaiGhe();
+        loaiGhe.setId(rs.getInt("loaiGheId"));
+        loaiGhe.setTenLoai(rs.getString("tenLoai"));
+        loaiGhe.setPhuThu(rs.getInt("phuThu"));
+        ghe.setLoaiGhe(loaiGhe);
+        return ghe;
+    }
+
     static Ve docVe(ResultSet rs) throws SQLException {
         Ve ve = new Ve();
         ve.setId(rs.getInt("veId"));
         ve.setGiaVe(rs.getInt("giaVe"));
         ve.setTrangThaiVe(rs.getString("trangThaiVe"));
         ve.setSuatChieu(SuatChieuDAO.docSuatChieu(rs));
-        ve.setGhe(GheDAO.docGhe(rs));
+        ve.setGhe(docGhe(rs));
         return ve;
     }
 }

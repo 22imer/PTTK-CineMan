@@ -394,14 +394,32 @@ Thuộc tính tường minh/ẩn của từng trang (in/out/sub) liệt kê đ�
 (`HttpSession.khachHangId`); FE chỉ giữ `KhachHang` trong React state, không lưu storage, reload quay lại `DangNhap`.
 Mã HTTP/thông điệp lỗi chi tiết: ARCHITECTURE.md §7.1. 9 trang còn lại thuộc bước đặt vé/đổi điểm.
 
-### 11.2. Tầng DAO (lớp thiết kế) — chữ ký đã chốt ở ARCHITECTURE.md §5
+### 11.2. Tầng DAO triển khai — hợp đồng ở ARCHITECTURE.md §5
 
-- `DAO`: cung cấp kết nối chung (`con : Connection`) cho các lớp kế thừa.
-- `ThanhVienDAO`: `kiemTraThongTin`, `kiemTraEmailSDT`, `kiemTraDangNhap`
-- `KhachHangDAO`: `taoHoSo`, `kiemTraDiem`, `truDiem`, `congDiem`
-- `PhimDAO`: `laydsPhim` · `KhungGioDAO`: `laydsKhungGio` · `SuatChieuDAO`: `laydsSuatChieu`
-- `VeDAO`: `tinhtienVe`, `kiemTraVe`, `laydsVe/laydsVeConHieuLuc`, `phatHanhVe→capNhatTrangThaiVe`, `huyVe`
-- `HoaDonDAO`: `taoHoaDon(hd, dsVe)`, `tinhTongTien(dsVe, voucher?)`, `kiemtraHetHan/kiemTraHetHan(idHoaDon)`, `xacNhanThanhToan`, `huyHoaDon(idHoaDon)` · `VoucherKhachHangDAO`: `kiemTraVoucher`, `apDungVoucher`, `luuVoucher(vc)` (thay `taoVoucher`) · `GiaoDichDoiDiemDAO`: `luuGiaoDich(gd)`, `layLichSuTheoKhachHang(idKhachHang)` · `QuaTangDAO`: `laydsQuaTang`, `kiemTraSoLuong`, `capNhatSoLuong(idQua, soLuong)`
+- `DAO`: cung cấp `JdbcTemplate` dùng chung cấu hình `DataSource` của Spring; kết nối quản lý theo transaction.
+- `ThanhVienDAO`: `kiemTraThongTin`, `kiemTraEmailSDT`, `kiemTraDangNhap(ThanhVien tv)`.
+- `KhachHangDAO`: `taoHoSo`, `kiemTraDiem`, `truDiem`, `congDiem`.
+- `PhimDAO`: `laydsPhim` · `KhungGioDAO`: `laydsKhungGio` · `SuatChieuDAO`: `laydsSuatChieu`.
+- `VeDAO`: `laydsGhe(idSuatChieu)`, `tinhTienVe(...): Ve`, `kiemTraVe`, `laydsVeConHieuLuc`, `capNhatTrangThaiVe`, `huyVe`.
+- `HoaDonDAO`: `taoHoaDon(hd, dsVe)`, `tinhTongTien(dsVe, voucher?)`, `kiemTraHetHan(idHoaDon)`, `xacNhanThanhToan`, `huyHoaDon(idHoaDon)` · `VoucherKhachHangDAO`: `kiemTraVoucher`, `apDungVoucher`, `luuVoucher(vc)` · `GiaoDichDoiDiemDAO`: `luuGiaoDich(gd)`, `layLichSuTheoKhachHang(idKhachHang)` · `QuaTangDAO`: `laydsQuaTang`, `kiemTraSoLuong`, `capNhatSoLuong(idQua, soLuong)`.
+
+#### 11.2.1. Thiết kế DAO đặt vé theo sơ đồ
+
+Bản trình bày theo ảnh chỉ gồm `DAO` (`-con : Connection`, `+DAO()`) và 8 DAO con:
+`ThanhVienDAO`, `KhachHangDAO`, `PhimDAO`, `KhungGioDAO`, `SuatChieuDAO`, `VeDAO`, `HoaDonDAO`, `VoucherDAO`.
+Mỗi DAO con có constructor công khai tương ứng; giữ các phương thức trong ảnh và bổ sung kiểu còn thiếu.
+`VeDAO.laydsGhe(idSuatChieu : int) : List<Ghe>` đảm nhiệm truy vấn toàn bộ ghế trong phòng của suất chiếu; không có lớp `GheDAO`.
+Kết hợp với `VeDAO.laydsVe(idSuatChieu : int) : List<Ve>` để hiển thị cả ghế trống và ghế đang giữ/đã bán.
+Không thêm `themVe`, `luuVe`, `capNhatTrangThaiVe`, `tinhTongTien` hoặc `kiemTraHetHan` vào hình.
+
+Danh sách chữ ký, trách nhiệm và bảng đối chiếu với Java nằm ở [ARCHITECTURE.md §5.1](ARCHITECTURE.md#51-thiết-kế-dao-đặt-vé-theo-sơ-đồ).
+Nguồn [PlantUML](diagrams/puml/dao-dat-ve-theo-so-do.puml) và ảnh [SVG](diagrams/out/dao-dat-ve-theo-so-do.svg)
+chỉ mô tả phần DAO đặt vé, không phải sơ đồ đầy đủ của giao diện/thực thể hoặc của chức năng đổi điểm.
+
+`taoHoaDon()` và `huyHoaDon()` là chữ ký trình bày rút gọn; không cho phép DAO tự đọc session hoặc lưu
+“hóa đơn hiện tại”. Hợp đồng triển khai ở §11.2 và `ARCHITECTURE.md §5` giữ nguyên.
+Tạo hóa đơn cùng vé phải nguyên tử; xác nhận thanh toán, bán vé, sử dụng voucher và cộng điểm cũng phải
+trong một transaction, dù trên hình là các phương thức riêng.
 
 ### 11.3. Tầng thực thể & phụ trợ
 
@@ -443,7 +461,7 @@ Khách click Đăng ký trên `DangNhap.ts` → `DangNhap.ts → GDDangKyTaiKhoa
 
 ### 13.2. Đặt vé (chia `hinh-3-24a/b/c`)
 - **24a** (chọn phim/khung giờ/suất chiếu): `GDChonPhim.ts → HTTPClient.fetch() → RESTController.requestMapping() → PhimDAO.laydsPhim()` → trả `List<Phim>` → hiển thị → chọn phim → `KhungGioDAO.laydsKhungGio()` → chọn ngày/khung giờ → `laydsSuatChieu(idPhim, ngayChieu, idKhungGio)` → hiển thị suất chiếu.
-- **24b** (chọn ghế, tạo HoaDon/Ve): `GheDAO.laydsGhe(idSuatChieu)` + `VeDAO.laydsVeConHieuLuc(suatChieu)` → hiển thị sơ đồ ghế → loop mỗi ghế: `VeDAO.kiemTraVe(idSuatChieu, idGhe)` → `VeDAO.tinhtienVe(suatChieu, ghe)` → `new Ve(...)` → thêm vào `dsVe` → click Tiếp tục → `new HoaDon(kh, dsVe, CHO_THANH_TOAN, hetHan)` → `HoaDonDAO.taoHoaDon(hd, dsVe)` (một giao dịch: kiểm tra `(suất, ghế)`, lưu HoaDon + Ve) → chuyển `GDThanhToan.ts`.
+- **24b** (chọn ghế, tạo HoaDon/Ve): `VeDAO.laydsGhe(idSuatChieu)` + `VeDAO.laydsVeConHieuLuc(suatChieu)` → hiển thị sơ đồ ghế → loop mỗi ghế: `VeDAO.kiemTraVe(idSuatChieu, idGhe)` → `VeDAO.tinhtienVe(suatChieu, ghe)` → `new Ve(...)` → thêm vào `dsVe` → click Tiếp tục → `new HoaDon(kh, dsVe, CHO_THANH_TOAN, hetHan)` → `HoaDonDAO.taoHoaDon(hd, dsVe)` (một giao dịch: kiểm tra `(suất, ghế)`, lưu HoaDon + Ve) → chuyển `GDThanhToan.ts`.
 - **24c** (thanh toán/voucher/xác nhận): `HoaDonDAO.tinhTongTien(dsVe)` → hiển thị → nhập mã voucher, click Áp dụng → `VoucherDAO.kiemTraVoucher` → `apDungVoucher` → `tinhTongTien(dsVe, voucher)` → hiển thị số tiền sau giảm → click Xác nhận thanh toán → `kiemTraHetHan(idHoaDon)` → `xacNhanThanhToan(idHoaDon)` → `VeDAO.capNhatTrangThaiVe(idHoaDon, DA_BAN)` → `KhachHangDAO.congDiem` → `GDXacNhanThanhToan.ts` thông báo đặt vé thành công.
 
 ### 13.3. Đổi điểm (73 bước, `hinh-3-25`)

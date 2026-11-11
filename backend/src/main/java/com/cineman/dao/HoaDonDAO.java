@@ -71,7 +71,6 @@ public class HoaDonDAO extends DAO {
     }
 
     private final SuatChieuDAO suatChieuDAO;
-    private final GheDAO gheDAO;
     private final VeDAO veDAO;
     private final VoucherKhachHangDAO voucherKhachHangDAO;
     private final KhachHangDAO khachHangDAO;
@@ -79,14 +78,12 @@ public class HoaDonDAO extends DAO {
 
     public HoaDonDAO(JdbcTemplate jdbcTemplate,
                      SuatChieuDAO suatChieuDAO,
-                     GheDAO gheDAO,
                      VeDAO veDAO,
                      VoucherKhachHangDAO voucherKhachHangDAO,
                      KhachHangDAO khachHangDAO,
                      @Value("${points.per-amount:20000}") int diemMoiMuc) {
         super(jdbcTemplate);
         this.suatChieuDAO = suatChieuDAO;
-        this.gheDAO = gheDAO;
         this.veDAO = veDAO;
         this.voucherKhachHangDAO = voucherKhachHangDAO;
         this.khachHangDAO = khachHangDAO;
@@ -135,7 +132,7 @@ public class HoaDonDAO extends DAO {
             return null;
         }
 
-        List<Ghe> gheCaPhong = gheDAO.laydsGhe(idSuatChieu);
+        List<Ghe> gheCaPhong = veDAO.laydsGhe(idSuatChieu);
         List<Ghe> gheDaChon = new ArrayList<>(dsVe.size());
         for (int id : idGhe) {
             Ghe ghe = null;

@@ -1,0 +1,100 @@
+@startuml dao-dat-ve-theo-so-do
+' Thiết kế DAO đặt vé theo ảnh đã chốt; không thay hợp đồng Java.
+' Truy vấn toàn bộ ghế thuộc VeDAO; không có lớp GheDAO.
+' Đối chiếu triển khai: ARCHITECTURE.md §5.1.
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 14
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam dpi 200
+skinparam roundCorner 6
+skinparam ArrowFontSize 13
+skinparam ClassFontSize 14
+skinparam ClassAttributeFontSize 13
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #7ACFF5
+skinparam classBorderColor black
+skinparam ArrowColor black
+skinparam linetype ortho
+hide empty members
+
+title Thiết kế DAO — Chức năng đặt vé
+
+class DAO {
+  -con : Connection
+  +DAO()
+}
+
+together {
+  class ThanhVienDAO {
+    +ThanhVienDAO()
+    +kiemTraDangNhap(username : String, password : String) : boolean
+  }
+  class KhachHangDAO {
+    +KhachHangDAO()
+    +congDiem(maKhachHang : String, diem : int) : boolean
+  }
+  class PhimDAO {
+    +PhimDAO()
+    +laydsPhim() : List<Phim>
+  }
+  class KhungGioDAO {
+    +KhungGioDAO()
+    +laydsKhungGio() : List<KhungGio>
+  }
+}
+
+together {
+  class SuatChieuDAO {
+    +SuatChieuDAO()
+    +laydsSuatChieu(idPhim : int, ngayChieu : Date, idKhungGio : int) : List<SuatChieu>
+  }
+  class VeDAO {
+    +VeDAO()
+    +tinhtienVe(suatChieu : SuatChieu, ghe : Ghe) : int
+    +laydsGhe(idSuatChieu : int) : List<Ghe>
+    +laydsVe(idSuatChieu : int) : List<Ve>
+    +kiemTraVe(idSuatChieu : int, idGhe : int) : boolean
+    +phatHanhVe(idHoaDon : int) : boolean
+    +huyVe(idVe : int) : boolean
+  }
+  class HoaDonDAO {
+    +HoaDonDAO()
+    +taoHoaDon() : HoaDon
+    +xacNhanThanhToan(idHoaDon : int) : boolean
+    +huyHoaDon() : boolean
+  }
+  class VoucherDAO {
+    +VoucherDAO()
+    +kiemTraVoucher(maVoucher : String, idKhachHang : int) : VoucherKhachHang
+    +apDungVoucher(idHoaDon : int, idVoucher : int) : boolean
+  }
+}
+
+DAO <|-- ThanhVienDAO
+DAO <|-- KhachHangDAO
+DAO <|-- PhimDAO
+DAO <|-- KhungGioDAO
+DAO <|-- SuatChieuDAO
+DAO <|-- VeDAO
+DAO <|-- HoaDonDAO
+DAO <|-- VoucherDAO
+
+ThanhVienDAO -[hidden]right- KhachHangDAO
+KhachHangDAO -[hidden]right- PhimDAO
+PhimDAO -[hidden]right- KhungGioDAO
+SuatChieuDAO -[hidden]right- VeDAO
+VeDAO -[hidden]right- HoaDonDAO
+HoaDonDAO -[hidden]right- VoucherDAO
+ThanhVienDAO -[hidden]down- SuatChieuDAO
+KhachHangDAO -[hidden]down- VeDAO
+PhimDAO -[hidden]down- HoaDonDAO
+KhungGioDAO -[hidden]down- VoucherDAO
+
+legend bottom left
+  Thiết kế khái niệm; chữ ký Java đối chiếu ở ARCHITECTURE.md §5, §5.1.
+  VeDAO.laydsGhe: toàn bộ ghế của suất chiếu; laydsVe: vé để xác định trạng thái ghế.
+  taoHoaDon() và huyHoaDon() là chữ ký rút gọn, không ngầm lưu hóa đơn hiện tại trong DAO.
+  Tạo hóa đơn + vé: một transaction. Thanh toán + bán vé + dùng voucher + cộng điểm: một transaction.
+endlegend
+@enduml
