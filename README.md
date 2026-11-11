@@ -199,9 +199,9 @@ Bộ test backend kiểm tra đăng ký/đăng nhập, ràng buộc schema/seed,
 | [AGENTS.md](AGENTS.md) | Quy ước làm việc và checkpoint commit |
 | [graphify-out/GRAPH_REPORT.md](graphify-out/GRAPH_REPORT.md) | Báo cáo knowledge graph và giới hạn trích xuất |
 | [graphify-out/graph.json](graphify-out/graph.json) | Dữ liệu graph để truy vấn |
-| [graphify-out/graph.html](graphify-out/graph.html) | Graph tương tác; tải về và mở bằng trình duyệt, cần mạng để tải thư viện hiển thị |
+| graphify-out/graph.html | Graph tương tác, không lưu trong git; sinh bằng `graphify update .` rồi mở bằng trình duyệt (cần mạng để tải thư viện hiển thị) |
 
-Knowledge graph là bản đồ hỗ trợ điều hướng, không phải call graph đã xác minh đầy đủ. Xem cảnh báo về liên kết suy luận, endpoint chưa phân giải và giới hạn kiểm chứng hiển thị trong báo cáo. Thay đổi mã nguồn/tài liệu có thể làm graph cũ; cần dựng lại khi dùng để phân tích phiên bản mới.
+Knowledge graph là bản đồ hỗ trợ điều hướng, không phải call graph đã xác minh đầy đủ. Xem cảnh báo về liên kết suy luận, endpoint chưa phân giải và giới hạn kiểm chứng hiển thị trong báo cáo. Thay đổi mã nguồn/tài liệu làm graph cũ: dựng lại bằng `graphify update .` và commit `graphify-out/`; CI `graph-fresh` chặn PR khi graph lệch.
 
 ## Phạm vi còn mở và đóng góp
 
