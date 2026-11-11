@@ -1,6 +1,5 @@
 package com.cineman.controller;
 
-import com.cineman.dao.GheDAO;
 import com.cineman.dao.HoaDonDAO;
 import com.cineman.dao.KhungGioDAO;
 import com.cineman.dao.PhimDAO;
@@ -58,16 +57,14 @@ public class DatVeController {
     private final PhimDAO phimDAO;
     private final KhungGioDAO khungGioDAO;
     private final SuatChieuDAO suatChieuDAO;
-    private final GheDAO gheDAO;
     private final VeDAO veDAO;
     private final HoaDonDAO hoaDonDAO;
 
     public DatVeController(PhimDAO phimDAO, KhungGioDAO khungGioDAO, SuatChieuDAO suatChieuDAO,
-                           GheDAO gheDAO, VeDAO veDAO, HoaDonDAO hoaDonDAO) {
+                           VeDAO veDAO, HoaDonDAO hoaDonDAO) {
         this.phimDAO = phimDAO;
         this.khungGioDAO = khungGioDAO;
         this.suatChieuDAO = suatChieuDAO;
-        this.gheDAO = gheDAO;
         this.veDAO = veDAO;
         this.hoaDonDAO = hoaDonDAO;
     }
@@ -155,7 +152,7 @@ public class DatVeController {
         }
         hoaDonDAO.giaiPhongGiuHetHan(suatChieuId);
         return ResponseEntity.ok(ApiResponse.ok(new SoDoGhe(
-                gheDAO.laydsGhe(suatChieuId),
+                veDAO.laydsGhe(suatChieuId),
                 veDAO.laydsVeConHieuLuc(suatChieu),
                 suatChieu)));
     }

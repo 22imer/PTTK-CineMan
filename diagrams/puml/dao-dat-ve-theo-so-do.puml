@@ -1,6 +1,6 @@
 @startuml dao-dat-ve-theo-so-do
 ' Thiết kế DAO đặt vé theo ảnh đã chốt; không thay hợp đồng Java.
-' Điều chỉnh: truy vấn toàn bộ ghế thuộc VeDAO, không có lớp GheDAO trong thiết kế.
+' Truy vấn toàn bộ ghế thuộc VeDAO; không có lớp GheDAO.
 ' Đối chiếu triển khai: ARCHITECTURE.md §5.1.
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 14
@@ -92,7 +92,7 @@ PhimDAO -[hidden]down- HoaDonDAO
 KhungGioDAO -[hidden]down- VoucherDAO
 
 legend bottom left
-  Thiết kế khái niệm; hợp đồng Java hiện tại giữ nguyên (ARCHITECTURE.md §5, §5.1).
+  Thiết kế khái niệm; chữ ký Java đối chiếu ở ARCHITECTURE.md §5, §5.1.
   VeDAO.laydsGhe: toàn bộ ghế của suất chiếu; laydsVe: vé để xác định trạng thái ghế.
   taoHoaDon() và huyHoaDon() là chữ ký rút gọn, không ngầm lưu hóa đơn hiện tại trong DAO.
   Tạo hóa đơn + vé: một transaction. Thanh toán + bán vé + dùng voucher + cộng điểm: một transaction.
